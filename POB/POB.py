@@ -235,7 +235,7 @@ def getPanels(playerPosition,WallsX,WallsY):
 
 def quitGame():
     pg.quit()
-    # sys.exit()
+    sys.exit(0)
 
 def redrawWindow():
 
