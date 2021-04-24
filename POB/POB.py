@@ -3,6 +3,8 @@ import os
 import sys
 
 import dungeon as dg
+from UIConstants import *
+from Player import *
 
 pg.init()
 pg.font.init()
@@ -13,70 +15,6 @@ pg.display.set_icon(programIcon)
 
 pg.display.set_caption('Py of the Beholder')
 
-FPS = 60
-
-WIDTH = 40*24
-HEIGHT = WIDTH*625//1000
-
-#Width and height of Background of environment window
-BG_WH = (WIDTH*55//100,HEIGHT*60//100)
-#define width and height on environment panels
-P1_WH = (WIDTH*9//120,HEIGHT*60//100)
-P2_WH = (WIDTH*9//120,HEIGHT*48//100)
-P2_WH = (WIDTH*9//120,HEIGHT*48//100)
-P3_WH = (WIDTH*5//100,HEIGHT*32//100)
-P4_WH = (WIDTH*5//300,HEIGHT*20//100)
-
-FP3_WH = (WIDTH*5//100,HEIGHT*24//100)
-KP3_WH = (WIDTH*5//100,HEIGHT*24//100)
-
-FP4_WH = (WIDTH*15//200,HEIGHT*20//100)
-KP4_WH = (WIDTH*15//200,HEIGHT*20//100)
-
-F1_WH = (WIDTH*40//100,HEIGHT*48//100)
-F2_WH = (WIDTH*25//100,HEIGHT*32//100)
-F3_WH = (WIDTH*15//100,HEIGHT*20//100)
-
-COMPASS1_WH = (60,51)
-COMPASS2_WH = (50,30)
-
-#position arguments of Panels
-ORIGIN_POS = (0,0)
-LP1_POS = (0,0)
-LP2_POS = (WIDTH*9//120,HEIGHT*4//100)
-LP3_POS = (WIDTH*15//100,HEIGHT*8//100)
-LP4_POS = (WIDTH*20//100,HEIGHT*12//100)
-
-FP3_POS = (0,HEIGHT*12//100)
-KP3_POS = (WIDTH*50//100,HEIGHT*12//100)
-
-FP4_POS = (WIDTH*5//100,HEIGHT*12//100)
-KP4_POS = (WIDTH*85//200,HEIGHT*12//100)
-
-RP1_POS = (WIDTH*95//200,0)
-RP2_POS = (WIDTH*40//100,HEIGHT*4//100)
-RP3_POS = (WIDTH*35//100,HEIGHT*8//100)
-RP4_POS = (WIDTH*1//3,HEIGHT*12//100)
-
-LF1_POS = (WIDTH*9//120-F1_WH[0],HEIGHT*4//100)
-CF1_POS = (WIDTH*9//120,HEIGHT*4//100)
-RF1_POS = (WIDTH*9//120+F1_WH[0],HEIGHT*4//100)
-
-LF2_POS = (-WIDTH*10//100,HEIGHT*8//100)
-CF2_POS = (WIDTH*15//100,HEIGHT*8//100)
-RF2_POS = (WIDTH*40//100,HEIGHT*8//100)
-
-FF3_POS = (WIDTH*20//100-F3_WH[0]*2,HEIGHT*12//100)
-LF3_POS = (WIDTH*20//100-F3_WH[0],HEIGHT*12//100)
-CF3_POS = (WIDTH*20//100,HEIGHT*12//100)
-RF3_POS = (WIDTH*20//100+F3_WH[0],HEIGHT*12//100)
-KF3_POS = (WIDTH*20//100+F3_WH[0]*2,HEIGHT*12//100)
-
-RF2_POS = (WIDTH*40//100,HEIGHT*8//100)
-
-COMPASSC_POS = (WIDTH*336//960,HEIGHT*384//600) #(336,384)
-COMPASSL_POS = (WIDTH*232//960,HEIGHT*462//600) #(232,462)
-COMPASSR_POS = (WIDTH*450//960,HEIGHT*462//600) #(450,462)
 
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 
@@ -158,11 +96,11 @@ Adornments_panels={
       }
 
 
-playerPosition=[7,13,'E']
+player = Player(7,13,'E')
 
 
 def move(KeyPress):
-    global playerPosition
+    global player
 
     Moves = {
         'w':{'N':[0,-1,'N'],'S':[0,+1,'S'],'E':[+1,0,'E'],'W':[-1,0,'W']},
@@ -173,34 +111,34 @@ def move(KeyPress):
         'e':{'N':[0,0,'E'],'S':[0,0,'W'],'E':[0,0,'S'],'W':[0,0,'N']}
         }
 
-    if dg.Clipping[playerPosition[1]+Moves[KeyPress][playerPosition[2]][1]][playerPosition[0] + Moves[KeyPress][playerPosition[2]][0]] in [1,3]:
+    if dg.Clipping[player.Y+Moves[KeyPress][player.D][1]][player.X + Moves[KeyPress][player.D][0]] in [1,3]:
         print("You can't go that way")
     else:
-        playerPosition[0] += Moves[KeyPress][playerPosition[2]][0]
-        playerPosition[1] += Moves[KeyPress][playerPosition[2]][1]
-        playerPosition[2] =  Moves[KeyPress][playerPosition[2]][2]
-        print(playerPosition)
+        player.X += Moves[KeyPress][player.D][0]
+        player.Y += Moves[KeyPress][player.D][1]
+        player.D =  Moves[KeyPress][player.D][2]
+        print(player.position())
 
 def clickSwitch():
     global panels
     global playerPosition
-    x,y,d = playerPosition    
+    x,y,d = player.position()   
     
-    if tuple(playerPosition) in dg.switches.keys():
-        x  = dg.switches[tuple(playerPosition)][0][0]
-        y  = dg.switches[tuple(playerPosition)][0][1]
+    if tuple(player.position()) in dg.switches.keys():
+        x  = dg.switches[tuple(player.position())][0][0]
+        y  = dg.switches[tuple(player.position())][0][1]
         if dg.Clipping[x][y] == 3:
             dg.Clipping[x][y] = 2
-            dg.Adornments[dg.switches[tuple(playerPosition)][1]]='LeverDown'
+            dg.Adornments[dg.switches[tuple(player.position())][1]]='LeverDown'
             
         else:
             dg.Clipping[x][y] = 3
-            dg.Adornments[dg.switches[tuple(playerPosition)][1]]='LeverUp'
+            dg.Adornments[dg.switches[tuple(player.position())][1]]='LeverUp'
   
 
 def getPanels(playerPosition,WallsX,WallsY):
     global panels
-    x,y,d = playerPosition
+    x,y,d = player.position()
     
     if d in 'EW':
         a,b = 'P','F'
@@ -240,22 +178,22 @@ def quitGame():
 def redrawWindow():
 
     #Choose background art based on position
-    if playerPosition[0] % 2 == 0 and playerPosition[1] % 2 == 0 and playerPosition[2] in 'NS':
+    if player.X % 2 == 0 and player.Y % 2 == 0 and player.D in 'NS':
         BG_ART = 'BG1.png'
-    elif playerPosition[0] % 2 == 1 and playerPosition[1] % 2 == 0 and playerPosition[2] in 'NS':
+    elif player.X % 2 == 1 and player.Y % 2 == 0 and player.D in 'NS':
         BG_ART = 'BG2.png'
-    elif playerPosition[0] % 2 == 0 and playerPosition[1] % 2 == 1 and playerPosition[2] in 'NS':
+    elif player.X % 2 == 0 and player.Y % 2 == 1 and player.D in 'NS':
         BG_ART = 'BG2.png'
-    elif playerPosition[0] % 2 == 1 and playerPosition[1] % 2 == 1 and playerPosition[2] in 'NS':
+    elif player.X % 2 == 1 and player.Y % 2 == 1 and player.D in 'NS':
         BG_ART = 'BG1.png'
         
-    elif playerPosition[0] % 2 == 0 and playerPosition[1] % 2 == 0 and playerPosition[2] in 'EW':
+    elif player.X % 2 == 0 and player.Y % 2 == 0 and player.D in 'EW':
         BG_ART = 'BG2.png'
-    elif playerPosition[0] % 2 == 1 and playerPosition[1] % 2 == 0 and playerPosition[2] in 'EW':
+    elif player.X % 2 == 1 and player.Y % 2 == 0 and player.D in 'EW':
         BG_ART = 'BG1.png'
-    elif playerPosition[0] % 2 == 0 and playerPosition[1] % 2 == 1 and playerPosition[2] in 'EW':
+    elif player.X % 2 == 0 and player.Y % 2 == 1 and player.D in 'EW':
         BG_ART = 'BG1.png'
-    elif playerPosition[0] % 2 == 1 and playerPosition[1] % 2 == 1 and playerPosition[2] in 'EW':
+    elif player.X % 2 == 1 and player.Y % 2 == 1 and player.D in 'EW':
         BG_ART = 'BG2.png'
 
     #  Render the background of the view window        
@@ -273,7 +211,7 @@ def redrawWindow():
         WIN.blit(img, Adornments_panels[panel][3])          
 
     # render the UI
-    UI = pg.transform.scale(pg.image.load(os.path.join('Assets', 'UI', playerPosition[2] + '.png')), (WIDTH, HEIGHT))
+    UI = pg.transform.scale(pg.image.load(os.path.join('Assets', 'UI', player.D + '.png')), (WIDTH, HEIGHT))
     WIN.blit(UI, ORIGIN_POS)
     
     # display it in pygame
@@ -285,7 +223,7 @@ def main():
     
     while True:
         clock.tick(FPS)
-        getPanels(playerPosition,dg.WallsX,dg.WallsY)
+        getPanels(player.position,dg.WallsX,dg.WallsY)
         redrawWindow()
 
         for event in pg.event.get():

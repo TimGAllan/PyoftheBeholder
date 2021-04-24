@@ -21,7 +21,16 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Player.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DungeonView.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="dungeon.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="UIConstants.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="POB.py" />
