@@ -6,9 +6,6 @@ class Player(object):
         self.D = Direction
         self.position = (XPos, YPos, Direction)
 
-    #def position(self):
-    #    return [self.X, self.Y, self.D]
-
     def move(self,clipping,KeyPress):
 
         Moves = {

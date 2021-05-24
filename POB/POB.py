@@ -22,10 +22,10 @@ pg.display.set_caption('Py of the Beholder')
 WIN = pg.display.set_mode((WIDTH, HEIGHT))
 
 
-Walls_path = os.path.join('Assets/Environments', dg.environment, 'Walls')
-Adornments_path = os.path.join('Assets/Environments', dg.environment, 'Adornments')
+Walls_path = os.path.join('Assets/Environments', DungeonView.environment, 'Walls')
+Adornments_path = os.path.join('Assets/Environments', DungeonView.environment, 'Adornments')
 
-dungeonView = dv.DungeonView()
+dungeonView = dv.DungeonView(dg.environment)
 player = Player(7,13,'E')
 
 
@@ -52,27 +52,8 @@ def quitGame():
 
 def redrawWindow():
 
-    #Choose background art based on position
-    if player.X % 2 == 0 and player.Y % 2 == 0 and player.D in 'NS':
-        BG_ART = 'BG1.png'
-    elif player.X % 2 == 1 and player.Y % 2 == 0 and player.D in 'NS':
-        BG_ART = 'BG2.png'
-    elif player.X % 2 == 0 and player.Y % 2 == 1 and player.D in 'NS':
-        BG_ART = 'BG2.png'
-    elif player.X % 2 == 1 and player.Y % 2 == 1 and player.D in 'NS':
-        BG_ART = 'BG1.png'
-        
-    elif player.X % 2 == 0 and player.Y % 2 == 0 and player.D in 'EW':
-        BG_ART = 'BG2.png'
-    elif player.X % 2 == 1 and player.Y % 2 == 0 and player.D in 'EW':
-        BG_ART = 'BG1.png'
-    elif player.X % 2 == 0 and player.Y % 2 == 1 and player.D in 'EW':
-        BG_ART = 'BG1.png'
-    elif player.X % 2 == 1 and player.Y % 2 == 1 and player.D in 'EW':
-        BG_ART = 'BG2.png'
-
     #  Render the background of the view window        
-    BG = pg.transform.scale(pg.image.load(os.path.join('Assets/Environments', dg.environment, BG_ART)), BG_WH)    
+    BG = pg.transform.scale(pg.image.load(os.path.join('Assets/Environments', dg.environment, dungeonView.bg)), BG_WH)    
     WIN.blit(BG, ORIGIN_POS)
     
     # Render all the wall panels and environment
