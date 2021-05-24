@@ -4,10 +4,11 @@ import os
 import sys
 
 ##Import POB files
-import dungeon      as dg
+import Dungeon      as dg
 import DungeonView  as dv
+import Player       as pl
 from UIConstants    import *
-from Player         import *
+
 
 ##Initialis Pygame
 pg.init()
@@ -19,32 +20,10 @@ pg.display.set_icon(programIcon)
 pg.display.set_caption('Py of the Beholder')
 
 
-WIN = pg.display.set_mode((WIDTH, HEIGHT))
-
-
-Walls_path = os.path.join('Assets/Environments', DungeonView.environment, 'Walls')
-Adornments_path = os.path.join('Assets/Environments', DungeonView.environment, 'Adornments')
+WIN = pg.display.set_mode((960, 600))
 
 dungeonView = dv.DungeonView(dg.environment)
-player = Player(7,13,'E')
-
-
-def clickSwitch():
-    global panels
-    global playerPosition
-    x,y,d = player.position   
-    
-    if player.position in dg.switches.keys():
-        x  = dg.switches[player.position][0][0]
-        y  = dg.switches[player.position][0][1]
-        if dg.Clipping[x][y] == 3:
-            dg.Clipping[x][y] = 2
-            dg.Adornments[dg.switches[player.position][1]]='LeverDown'
-            
-        else:
-            dg.Clipping[x][y] = 3
-            dg.Adornments[dg.switches[player.position][1]]='LeverUp'
-  
+player = pl.Player(7,13,'E')
 
 def quitGame():
     pg.quit()
@@ -53,17 +32,17 @@ def quitGame():
 def redrawWindow():
 
     #  Render the background of the view window        
-    BG = pg.transform.scale(pg.image.load(os.path.join('Assets/Environments', dg.environment, dungeonView.bg)), BG_WH)    
+    BG = pg.transform.scale(pg.image.load(os.path.join('Assets/Environments', dungeonView.Environment, dungeonView.bg)), BG_WH)    
     WIN.blit(BG, ORIGIN_POS)
     
     # Render all the wall panels and environment
     for panel in dungeonView.panels:
         # Redender the Wall panel
-        img = pg.transform.scale(pg.image.load(os.path.join(Walls_path, dungeonView.tiles[panel], dungeonView.panelImageFilenames[panel])), dungeonView.panelsWidthHeights[panel])
+        img = pg.transform.scale(pg.image.load(os.path.join(dungeonView.Walls_path, dungeonView.tiles[panel], dungeonView.panelImageFilenames[panel])), dungeonView.panelsWidthHeights[panel])
         WIN.blit(img, dungeonView.panelsPositions[panel])
 
         # Render the Adornment
-        img = pg.transform.scale(pg.image.load(os.path.join(Adornments_path, dungeonView.Adornments_panels[panel], dungeonView.panelImageFilenames[panel])), dungeonView.panelsWidthHeights[panel])
+        img = pg.transform.scale(pg.image.load(os.path.join(dungeonView.Adornments_path, dungeonView.Adornments_panels[panel], dungeonView.panelImageFilenames[panel])), dungeonView.panelsWidthHeights[panel])
         WIN.blit(img, dungeonView.panelsPositions[panel])          
 
     # render the UI
@@ -94,7 +73,7 @@ def main():
                     player.move(dg.Clipping,pg.key.name(event.key))
                     
                 if event.key == pg.K_SPACE:
-                    clickSwitch()
+                    player.clickSwitch(dg.switches, dg.Adornments, dg.Clipping)
 
                                      
                     

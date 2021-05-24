@@ -25,3 +25,16 @@ class Player(object):
             self.D =  Moves[KeyPress][self.D][2]
             self.position = (self.X, self.Y, self.D)
             print(self.position)
+
+    def clickSwitch(self, switches, Adornments, Clipping):
+    
+        if self.position in switches.keys():
+            x  = switches[self.position][0][0]
+            y  = switches[self.position][0][1]
+            if Clipping[x][y] == 3:
+                Clipping[x][y] = 2
+                Adornments[switches[self.position][1]]='LeverDown'
+            
+            else:
+                Clipping[x][y] = 3
+                Adornments[switches[self.position][1]]='LeverUp'

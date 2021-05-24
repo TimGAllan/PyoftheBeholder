@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>2e01627c-3753-4d90-9d1c-ad5884f0054c</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>POB.py</StartupFile>
+    <StartupFile>Main.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,7 +21,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="POB.py">
+    <Compile Include="Main.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Player.py">
@@ -30,7 +30,7 @@
     <Compile Include="DungeonView.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="dungeon.py">
+    <Compile Include="Dungeon.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="UIConstants.py">

@@ -1,8 +1,10 @@
-
+import os
 
 class DungeonView(object):
     def __init__(self,Environment):
         self.Environment = Environment
+        self.Walls_path = os.path.join('Assets/Environments', self.Environment, 'Walls')
+        self.Adornments_path = os.path.join('Assets/Environments', self.Environment, 'Adornments')
 
         self.panels =    ['FP4','KP4','LP4','RP4','FF3','LF3','CF3','RF3','KF3','CD3','LD3','RD3','FP3','LP3','RP3','KP3','LF2','CF2','RF2','CD2','LD2','RD2','LP2','RP2','LF1','CF1','RF1','CD1','LD1','RD1','LP1','RP1']
         self.bg = 'BG1.png'
