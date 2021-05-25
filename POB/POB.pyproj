@@ -21,13 +21,16 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Class_Dungeon.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Main.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="Player.py">
+    <Compile Include="Class_Player.py">
       <SubType>Code</SubType>
     </Compile>
-    <Compile Include="DungeonView.py">
+    <Compile Include="Class_DungeonView.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="Dungeon.py">

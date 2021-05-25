@@ -4,10 +4,10 @@ import os
 import sys
 
 ##Import POB files
-import Dungeon      as dg
-import DungeonView  as dv
-import Player       as pl
-from UIConstants    import *
+from Dungeon            import *
+from Class_DungeonView  import *
+from Class_Player       import *
+from UIConstants        import *
 
 
 ##Initialis Pygame
@@ -22,8 +22,8 @@ pg.display.set_caption('Py of the Beholder')
 
 WIN = pg.display.set_mode((960, 600))
 
-dungeonView = dv.DungeonView(dg.environment)
-player = pl.Player(7,13,'E')
+dungeonView = DungeonView(Dungeon.levels[0].Environment)
+player = Player(7,13,'E')
 
 def quitGame():
     pg.quit()
@@ -58,7 +58,7 @@ def main():
     
     while True:
         clock.tick(FPS)
-        dungeonView.updatePanels(player.position,dg.WallsX,dg.WallsY,dg.Adornments,dg.Clipping)
+        dungeonView.updatePanels(player.position,Dungeon.levels[0].WallsX,Dungeon.levels[0].WallsY,Dungeon.levels[0].Adornments,Dungeon.levels[0].Clipping)
         redrawWindow()
 
         for event in pg.event.get():
@@ -70,10 +70,10 @@ def main():
                     quitGame() 
                 
                 if pg.key.name(event.key) in 'qweasd':
-                    player.move(dg.Clipping,pg.key.name(event.key))
+                    player.move(Dungeon.levels[0].Clipping,pg.key.name(event.key))
                     
                 if event.key == pg.K_SPACE:
-                    player.clickSwitch(dg.switches, dg.Adornments, dg.Clipping)
+                    player.clickSwitch(Dungeon.levels[0].Switches, Dungeon.levels[0].Adornments, Dungeon.levels[0].Clipping)
 
                                      
                     
