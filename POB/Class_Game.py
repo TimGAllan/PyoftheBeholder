@@ -9,7 +9,7 @@ class Game(object):
         self.dungeonview = dungeonview
         self.WH = (960,600)
 
-    def Launch(self):
+    def launch(self):
         ##Initialise Pygame
         pg.init()
         pg.font.init()
@@ -26,7 +26,7 @@ class Game(object):
         pg.quit()
         sys.exit(0)
 
-    def Tick(self):
+    def tick(self):
         self.clock.tick(60)
 
     def redrawWindow(self):

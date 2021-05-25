@@ -1,10 +1,12 @@
 class Player(object):
     
-    def __init__(self, XPos, YPos, Direction):
-        self.X = XPos
-        self.Y = YPos
-        self.D = Direction
-        self.position = (XPos, YPos, Direction)
+    def __init__(self, dungeon):
+        self.L = dungeon.entryPos[0]
+        self.X = dungeon.entryPos[1]
+        self.Y = dungeon.entryPos[2]
+        self.D = dungeon.entryPos[3]
+        self.dungeonPos = (self.L, self.X, self.Y, self.D)
+        self.levelPos = (self.X, self.Y, self.D)
 
     def move(self,clipping,KeyPress):
 
@@ -23,18 +25,19 @@ class Player(object):
             self.X += Moves[KeyPress][self.D][0]
             self.Y += Moves[KeyPress][self.D][1]
             self.D =  Moves[KeyPress][self.D][2]
-            self.position = (self.X, self.Y, self.D)
-            print(self.position)
+            self.dungeonPos = (self.L, self.X, self.Y, self.D)
+            self.levelPos = (self.X, self.Y, self.D)
+            print(self.dungeonPos)
 
-    def clickSwitch(self, switches, Adornments, Clipping):
+    def clickSwitch(self, switches, adornments, clipping):
     
-        if self.position in switches.keys():
-            x  = switches[self.position][0][0]
-            y  = switches[self.position][0][1]
-            if Clipping[x][y] == 3:
-                Clipping[x][y] = 2
-                Adornments[switches[self.position][1]]='LeverDown'
+        if self.dungeonPos in switches.keys():
+            x  = switches[self.dungeonPos][0][0]
+            y  = switches[self.dungeonPos][0][1]
+            if clipping[x][y] == 3:
+                clipping[x][y] = 2
+                adornments[switches[self.dungeonPos][1]]='LeverDown'
             
             else:
-                Clipping[x][y] = 3
-                Adornments[switches[self.position][1]]='LeverUp'
+                clipping[x][y] = 3
+                adornments[switches[self.dungeonPos][1]]='LeverUp'

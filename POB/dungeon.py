@@ -1,10 +1,8 @@
-import Class_Dungeon as dg
+from Class_Dungeon import *
 
+environment = 'Sewer'
 
-
-Environment = 'Sewer'
-
-WallsX = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+wallsX = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
@@ -38,7 +36,7 @@ WallsX = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x',
 	]
 	
 	
-WallsY = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
+wallsY = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
@@ -70,7 +68,7 @@ WallsY = [	['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x',
 			['x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x','x'],
 	]
 	
-Clipping = [	
+clipping = [	
 	[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 	[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
 	[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
@@ -105,19 +103,21 @@ Clipping = [
 
 
 
-Adornments ={
+adornments ={
     ('x',11,12):'LeverUp'
     }
 
 
 
 
-Switches = {
-    (11,12,'N'):[(11,12),('x',11,12)]
+switches = {
+    (0,11,12,'N'):[(11,12),('x',11,12)]
     
     }
 
 
-Levels = [dg.DungeonLevel(Environment, WallsX, WallsY, Clipping, Adornments, Switches)]
+entryPos = (0,7,13,'E')
 
-Dungeon = dg.Dungeon(Levels)
+levels = [DungeonLevel(environment, wallsX, wallsY, clipping, adornments, switches)]
+
+dungeon = Dungeon(levels,entryPos) 

@@ -1,27 +1,22 @@
-##Import Standard Python libraries
-import pygame as pg
-import os
-import sys
-
 ##Import POB files
 from Dungeon            import *
 from Class_DungeonView  import *
 from Class_Player       import *
 from Class_Game         import *
-from UIConstants        import *
 
-dungeonView = DungeonView(Dungeon.levels[0].Environment)
-player = Player(7,13,'E')
+dungeonView = DungeonView(dungeon.levels[0].environment)
+#player = Player(7,13,'E')
+player = Player(dungeon)
 
 game = Game(player,dungeonView)
-game.Launch()
+game.launch()
 
 
 def main():
     
     while True:
-        game.Tick()
-        dungeonView.updatePanels(player.position,Dungeon.levels[0].WallsX,Dungeon.levels[0].WallsY,Dungeon.levels[0].Adornments,Dungeon.levels[0].Clipping)
+        game.tick()
+        dungeonView.updatePanels(player.levelPos,dungeon.levels[0].wallsX,dungeon.levels[0].wallsY,dungeon.levels[0].adornments,dungeon.levels[0].clipping)
         game.redrawWindow()
 
         for event in pg.event.get():
@@ -33,10 +28,10 @@ def main():
                     game.quit() 
                 
                 if pg.key.name(event.key) in 'qweasd':
-                    player.move(Dungeon.levels[0].Clipping,pg.key.name(event.key))
+                    player.move(dungeon.levels[0].clipping,pg.key.name(event.key))
                     
                 if event.key == pg.K_SPACE:
-                    player.clickSwitch(Dungeon.levels[0].Switches, Dungeon.levels[0].Adornments, Dungeon.levels[0].Clipping)
+                    player.clickSwitch(dungeon.levels[0].switches, dungeon.levels[0].adornments, dungeon.levels[0].clipping)
 
                                      
                     
