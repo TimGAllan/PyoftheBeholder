@@ -21,6 +21,9 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Class_Game.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Class_Dungeon.py">
       <SubType>Code</SubType>
     </Compile>
