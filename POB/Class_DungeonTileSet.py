@@ -18,11 +18,20 @@ class DungeonTileset(object):
 
         ##Create a new column for the Image
         df['Image'] = None
+        df['Blit_Pos'] = None
 
         ##Loop over the dataframe and create an image
         for i in df.index:
-            locsize = (df.loc[i,['Xpos']],df.loc[i,['Ypos']],df.loc[i,['Width']],df.loc[i,['Height']])
+            locsize = (df.loc[i,['Xpos']].item(),df.loc[i,['Ypos']].item(),df.loc[i,['Width']].item(),df.loc[i,['Height']].item())
+            #blitPos = (df.loc[i,['Blit_Xpos']].item(),df.loc[i,['Blit_Ypos']].item())
             flip = df.loc[i,['Flip']].item()
             df.loc[i,['Image']] = sub_image(self.walls,locsize,3,flip)
 
-        print(df)
+        self.df = df
+
+    def image(self, environment, wall, panel):
+        return self.df.loc[(environment,wall,panel),['Image']].item()
+
+    def blitPos(self, environment, wall, panel, scalefactor=3):
+        blitPos = (self.df.loc[(environment, wall, panel),['Blit_Xpos']].item()*scalefactor,self.df.loc[(environment, wall, panel),['Blit_Ypos']].item()*scalefactor) 
+        return blitPos

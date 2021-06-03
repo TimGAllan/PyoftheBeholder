@@ -29,7 +29,10 @@ class DungeonView(object):
             'FP4':( 48, 72),'KP4':(408, 72),'LP4':(192, 72),'RP4':(320, 72),'FF3':(-96, 72),'LF3':( 48, 72),'CF3':(192, 72),'RF3':(336, 72),'KF3':(480, 72),'CD3':(192, 72),'LD3':( 48, 72),'RD3':(336, 72),
             'FP3':(  0, 72),'LP3':(144, 48),'RP3':(336, 48),'KP3':(480, 72),'LF2':(-96, 48),'CF2':(144, 48),'RF2':(384, 48),'CD2':(144, 48),'LD2':(-96, 48),'RD2':(384, 48),'LP2':( 72, 24),'RP2':(384, 24),
             'LF1':(-312,24),'CF1':( 72, 24),'RF1':(456, 24),'CD1':( 72, 24),'LD1':(-312,24),'RD1':(456, 24),'LP1':(  0,  0),'RP1':(456,  0),}
-
+        self.panelImages = {
+            'FP4':None,'KP4':None,'LP4':None,'RP4':None,'FF3':None,'LF3':None,'CF3':None,'RF3':None,'KF3':None,'CD3':None,'LD3':'LD3.png',
+            'RD3':None,'FP3':None,'LP3':None,'RP3':None,'KP3':None,'LF2':None,'CF2':None,'RF2':None,'CD2':None,'LD2':'LD2.png','RD2':'RD2.png',
+            'LP2':None,'RP2':None,'LF1': None,'CF1':None,'RF1':None,'CD1':None,'LD1':None,'RD1':None,'LP1':None,'RP1':'RP1.png'}
         
         self.panelsOffsets={
             'FP4':{'E':(3,-1),'W':(-3,2),'N':(-1,-3),'S':(2,3)},
