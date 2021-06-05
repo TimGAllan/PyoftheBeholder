@@ -47,21 +47,7 @@ class Game(object):
     def redrawWindow(self):
 
         #  Render the background of the view window        
-        # BG = pg.transform.scale(pg.image.load(os.path.join('Assets/Environments', self.dungeonview.Environment, self.dungeonview.bg)), (528,360))
-        # BG = BG.convert()
-        #BG = import_image('Environments', 'EOB - BRICK - WALLSET - BACKGROUND.PNG',3)
         self.window.blit(self.dungeonview.bg, (0,0))
-
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','A','LP1'),self.dungeonview.dungeonTiletset.blitPos('Sewer','A','LP1'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','B','LP2'),self.dungeonview.dungeonTiletset.blitPos('Sewer','B','LP2'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','A','LP3'),self.dungeonview.dungeonTiletset.blitPos('Sewer','B','LP3'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','B','LP4'),self.dungeonview.dungeonTiletset.blitPos('Sewer','B','LP4'))
-
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','B','RP1'),self.dungeonview.dungeonTiletset.blitPos('Sewer','B','RP1'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','A','RP2'),self.dungeonview.dungeonTiletset.blitPos('Sewer','A','RP2'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','B','RP3'),self.dungeonview.dungeonTiletset.blitPos('Sewer','B','RP3'))
-        #self.window.blit(self.dungeonview.dungeonTiletset.image('Sewer','A','RP4'),self.dungeonview.dungeonTiletset.blitPos('Sewer','A','RP4'))
-
 
         ## Render all the wall panels and environment
         for panel in self.dungeonview.panels:
