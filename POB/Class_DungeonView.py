@@ -1,19 +1,22 @@
 import os
+import pygame as pg
+from Class_DungeonTileSet import *
 
 class DungeonView(object):
     def __init__(self,Environment):
         self.Environment = Environment
+        self.dungeonTiletset = DungeonTileset()
         self.Walls_path = os.path.join('Assets/Environments', self.Environment, 'Walls')
         self.Adornments_path = os.path.join('Assets/Environments', self.Environment, 'Adornments')
 
         self.panels =    ['FP4','KP4','LP4','RP4','FF3','LF3','CF3','RF3','KF3','CD3','LD3','RD3','FP3','LP3','RP3','KP3','LF2','CF2','RF2','CD2','LD2','RD2','LP2','RP2','LF1','CF1','RF1','CD1','LD1','RD1','LP1','RP1']
-        self.bg = 'BG1.png'
+        self.bg = self.dungeonTiletset.BG1
         self.tiles={
-            'FP4':'x','KP4':'x','LP4':'x','RP4':'x','FF3':'x','LF3':'x','CF3':'x','RF3':'x','KF3':'x','CD3':'0','LD3':'0','RD3':'0','FP3':'x','LP3':'x','RP3':'x','KP3':'x',
-            'LF2':'x','CF2':'x','RF2':'x','CD2':'0','LD2':'0','RD2':'0','LP2':'x','RP2':'x','LF1':'x','CF1':'x','RF1':'x','CD1':'0','LD1':'0','RD1':'0','LP1':'x','RP1':'x'}
+            'FP4':'x','KP4':'x','LP4':'x','RP4':'x','FF3':'x','LF3':'x','CF3':'x','RF3':'x','KF3':'x','CD3':'x','LD3':'x','RD3':'x','FP3':'x','LP3':'x','RP3':'x','KP3':'x',
+            'LF2':'x','CF2':'x','RF2':'x','CD2':'x','LD2':'x','RD2':'x','LP2':'x','RP2':'x','LF1':'x','CF1':'x','RF1':'x','CD1':'x','LD1':'x','RD1':'x','LP1':'x','RP1':'x'}
         self.Adornments_panels={
-            'FP4':'x','KP4':'x','LP4':'x','RP4':'x','FF3':'x','LF3':'x','CF3':'x','RF3':'x','KF3':'x','CD3':'0','LD3':'0','RD3':'0','FP3':'x','LP3':'x','RP3':'x','KP3':'x',
-            'LF2':'x','CF2':'x','RF2':'x','CD2':'0','LD2':'0','RD2':'0','LP2':'x','RP2':'x','LF1':'x','CF1':'x','RF1':'x','CD1':'0','LD1':'0','RD1':'0','LP1':'x','RP1':'x'}
+            'FP4':'x','KP4':'x','LP4':'x','RP4':'x','FF3':'x','LF3':'x','CF3':'x','RF3':'x','KF3':'x','CD3':'x','LD3':'x','RD3':'x','FP3':'x','LP3':'x','RP3':'x','KP3':'x',
+            'LF2':'x','CF2':'x','RF2':'x','CD2':'x','LD2':'x','RD2':'x','LP2':'x','RP2':'x','LF1':'x','CF1':'x','RF1':'x','CD1':'x','LD1':'x','RD1':'x','LP1':'x','RP1':'x'}
         self.panelImageFilenames={
             'FP4':'FP4.png','KP4':'KP4.png','LP4':'LP4.png','RP4':'RP4.png','FF3': 'F3.png','LF3': 'F3.png','CF3': 'F3.png','RF3': 'F3.png','KF3': 'F3.png','CD3': 'D3.png','LD3':'LD3.png',
             'RD3':'RD3.png','FP3':'FP3.png','LP3':'LP3.png','RP3':'RP3.png','KP3':'KP3.png','LF2': 'F2.png','CF2': 'F2.png','RF2': 'F2.png','CD2': 'D2.png','LD2':'LD2.png','RD2':'RD2.png',
@@ -26,6 +29,8 @@ class DungeonView(object):
             'FP4':( 48, 72),'KP4':(408, 72),'LP4':(192, 72),'RP4':(320, 72),'FF3':(-96, 72),'LF3':( 48, 72),'CF3':(192, 72),'RF3':(336, 72),'KF3':(480, 72),'CD3':(192, 72),'LD3':( 48, 72),'RD3':(336, 72),
             'FP3':(  0, 72),'LP3':(144, 48),'RP3':(336, 48),'KP3':(480, 72),'LF2':(-96, 48),'CF2':(144, 48),'RF2':(384, 48),'CD2':(144, 48),'LD2':(-96, 48),'RD2':(384, 48),'LP2':( 72, 24),'RP2':(384, 24),
             'LF1':(-312,24),'CF1':( 72, 24),'RF1':(456, 24),'CD1':( 72, 24),'LD1':(-312,24),'RD1':(456, 24),'LP1':(  0,  0),'RP1':(456,  0),}
+
+        
         self.panelsOffsets={
             'FP4':{'E':(3,-1),'W':(-3,2),'N':(-1,-3),'S':(2,3)},
             'KP4':{'E':(3,2),'W':(-3,-1),'N':(2,-3),'S':(-1,3)},
@@ -61,26 +66,27 @@ class DungeonView(object):
             'RP1':{'E':(0,1),'W':(0,0),'N':(1,0),'S':(0,0)}
               }
 
+
     def updatePanels(self,playerPosition,WallsX,WallsY,Adornments,Clipping):
         x,y,d = playerPosition
 
         if x % 2 == 0 and y % 2 == 0 and d in 'NS':
-            self.bg = 'BG1.png'
+            self.bg = self.dungeonTiletset.BG1
         elif x % 2 == 1 and y % 2 == 0 and d in 'NS':
-            self.bg = 'BG2.png'
+            self.bg = self.dungeonTiletset.BG2
         elif x % 2 == 0 and y % 2 == 1 and d in 'NS':
-            self.bg = 'BG2.png'
+            self.bg = self.dungeonTiletset.BG2
         elif x % 2 == 1 and y % 2 == 1 and d in 'NS':
-            self.bg = 'BG1.png'
+            self.bg = self.dungeonTiletset.BG1
         
         elif x % 2 == 0 and y % 2 == 0 and d in 'EW':
-            self.bg = 'BG2.png'
+            self.bg = self.dungeonTiletset.BG2
         elif x % 2 == 1 and y % 2 == 0 and d in 'EW':
-            self.bg = 'BG1.png'
+            self.bg = self.dungeonTiletset.BG1
         elif x % 2 == 0 and y % 2 == 1 and d in 'EW':
-            self.bg = 'BG1.png'
+            self.bg = self.dungeonTiletset.BG1
         elif x % 2 == 1 and y % 2 == 1 and d in 'EW':
-            self.bg = 'BG2.png'
+            self.bg = self.dungeonTiletset.BG2
     
         if d in 'EW':
             a,b = 'P','F'

@@ -1,3 +1,5 @@
+
+
 class Player(object):
     
     def __init__(self, dungeon):
@@ -7,6 +9,7 @@ class Player(object):
         self.D = dungeon.entryPos[3]
         self.dungeonPos = (self.L, self.X, self.Y, self.D)
         self.levelPos = (self.X, self.Y, self.D)
+        #self.cursor = Cursor()
 
     def move(self,clipping,KeyPress):
 
