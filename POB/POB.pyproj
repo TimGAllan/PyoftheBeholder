@@ -398,8 +398,6 @@
     <Content Include="Assets\Environments\Sewer\Walls\x\RP3.png" />
     <Content Include="Assets\Environments\Sewer\Walls\x\RP4.png" />
     <Content Include="Assets\eob_icon.png" />
-    <Content Include="Assets\items.png" />
-    <Content Include="Assets\playfld.png" />
     <Content Include="Assets\UI\base.png" />
     <Content Include="Assets\UI\compass\e\C.png" />
     <Content Include="Assets\UI\compass\e\L.png" />
@@ -417,6 +415,8 @@
     <Content Include="Assets\UI\N.png" />
     <Content Include="Assets\UI\S.png" />
     <Content Include="Assets\UI\W.png" />
+    <Content Include="Imagefiles.csv" />
+    <Content Include="Tiles.csv" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

@@ -16,10 +16,12 @@ dungeonView = DungeonView(dungeon.levels[0].environment)
 game.dungeonviewInit(dungeonView)
 
 def main():
-    
+
+    dungeonView.updatePanels(player.levelPos,dungeon.levels[0].wallsX,dungeon.levels[0].wallsY,dungeon.levels[0].adornments,dungeon.levels[0].clipping)
+
     while True:
         game.tick()
-        dungeonView.updatePanels(player.levelPos,dungeon.levels[0].wallsX,dungeon.levels[0].wallsY,dungeon.levels[0].adornments,dungeon.levels[0].clipping)
+        #dungeonView.updatePanels(player.levelPos,dungeon.levels[0].wallsX,dungeon.levels[0].wallsY,dungeon.levels[0].adornments,dungeon.levels[0].clipping)
         game.redrawWindow()
 
         for event in pg.event.get():
@@ -32,6 +34,7 @@ def main():
                 
                 if pg.key.name(event.key) in 'qweasd':
                     player.move(dungeon.levels[0].clipping,pg.key.name(event.key))
+                    dungeonView.updatePanels(player.levelPos,dungeon.levels[0].wallsX,dungeon.levels[0].wallsY,dungeon.levels[0].adornments,dungeon.levels[0].clipping)
                     print(str(int(game.clock.get_fps())))
                     
                 if event.key == pg.K_SPACE:

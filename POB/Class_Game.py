@@ -46,25 +46,24 @@ class Game(object):
 
     def redrawWindow(self):
 
-        #  Render the background of the view window        
-        self.window.blit(self.dungeonview.bg, (0,0))
+        ##  Render the background of the view window        
+        #self.window.blit(self.dungeonview.bg, (0,0))
 
         ## Render all the wall panels and environment
         for panel in self.dungeonview.panels:
             # Redender the Wall panel
-            if self.dungeonview.tiles[panel] != 'X' and panel[1]!='D' :
-                img = pg.transform.scale(pg.image.load(os.path.join(self.dungeonview.Walls_path, self.dungeonview.tiles[panel], self.dungeonview.panelImageFilenames[panel])), self.dungeonview.panelsWidthHeights[panel])
-                img.set_colorkey((255,0,255), pg.RLEACCEL)
+            if self.dungeonview.tiles[panel] not in 'X01':
+                #img = pg.transform.scale(pg.image.load(os.path.join(self.dungeonview.Walls_path, self.dungeonview.tiles[panel], self.dungeonview.panelImageFilenames[panel])), self.dungeonview.panelsWidthHeights[panel])
+                #img.set_colorkey((255,0,255), pg.RLEACCEL)
                 img = self.dungeonview.dungeonTiletset.image(self.dungeonview.Environment,self.dungeonview.tiles[panel],panel)
                 self.window.blit(img, self.dungeonview.panelsPositions[panel])
-                #self.window.blit(self.dungeonview.images[panel], self.dungeonview.panelsPositions[panel])
 
-        #    # Render the Adornment
-        #    if self.dungeonview.Adornments_panels[panel] != 'x':
-        #        img = pg.transform.scale(pg.image.load(os.path.join(self.dungeonview.Adornments_path, self.dungeonview.Adornments_panels[panel], self.dungeonview.panelImageFilenames[panel])), self.dungeonview.panelsWidthHeights[panel])
-        #        img.set_colorkey((255,0,255), pg.RLEACCEL)
-        #        img = img.convert()
-        #        self.window.blit(img, self.dungeonview.panelsPositions[panel])          
+            # Render the Adornment
+            if self.dungeonview.Adornments_panels[panel] != 'x':
+                img = pg.transform.scale(pg.image.load(os.path.join(self.dungeonview.Adornments_path, self.dungeonview.Adornments_panels[panel], self.dungeonview.panelImageFilenames[panel])), self.dungeonview.panelsWidthHeights[panel])
+                img.set_colorkey((255,0,255), pg.RLEACCEL)
+                img = img.convert()
+                self.window.blit(img, self.dungeonview.panelsPositions[panel])          
 
                
         # render the UI
