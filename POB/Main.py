@@ -4,13 +4,16 @@ from Class_DungeonView  import *
 from Class_Player       import *
 from Class_Game         import *
 
-dungeonView = DungeonView(dungeon.levels[0].environment)
+
 #player = Player(7,13,'E')
 player = Player(dungeon)
 
-game = Game(player,dungeonView)
+game = Game(player)
 game.launch()
 
+
+dungeonView = DungeonView(dungeon.levels[0].environment)
+game.dungeonviewInit(dungeonView)
 
 def main():
     
@@ -29,6 +32,7 @@ def main():
                 
                 if pg.key.name(event.key) in 'qweasd':
                     player.move(dungeon.levels[0].clipping,pg.key.name(event.key))
+                    print(str(int(game.clock.get_fps())))
                     
                 if event.key == pg.K_SPACE:
                     player.clickSwitch(dungeon.levels[0].switches, dungeon.levels[0].adornments, dungeon.levels[0].clipping)
