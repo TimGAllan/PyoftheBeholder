@@ -3,6 +3,10 @@ import sys
 import os
 from f_import_image import *
 
+# Game.dungeonview
+# Game.window           = pygame window object
+# Game.clock            = pygame Clock object
+
 class Game(object):
     
     def __init__(self,player):

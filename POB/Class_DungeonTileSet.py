@@ -4,6 +4,11 @@ from f_import_image import *
 
 #Import Main Brick image
 
+# DungeonTileset.BG1            = Background Image 1
+# DungeonTileset.BG2            = Background Image 1
+# DungeonTileset.WallsetImages  = Dataframe containg the Wallset images
+# DungeonTileset.WallTiles      = Dataframe containg the WallTiles
+
 class DungeonTileset(object):
     def __init__(self):
 
@@ -12,41 +17,44 @@ class DungeonTileset(object):
 
         #creates a dataframe from the csv file and loads each of the images into the Dataframe.
 
-        ImagesDF = pd.read_csv('Imagefiles.csv')
-        ImagesDF['Image'] = None
-        ImagesDF = ImagesDF.set_index(['File'])
+        WallsetImages = pd.read_csv('Imagefiles.csv')
+        WallsetImages['Image'] = None
+        WallsetImages = WallsetImages.set_index(['File'])
 
-        for i in ImagesDF.index:
-             ImagesDF.loc[i,['Image']] = import_image('Environments',i,3)
+        for i in WallsetImages.index:
+             WallsetImages.loc[i,['Image']] = import_image('Environments',i,3)
 
-        self.imagesDF = ImagesDF
+        self.WallsetImages = WallsetImages
 
 
         ##Load Dataframe with tile.csv data
-        df = pd.read_csv('tiles.csv')
-        df = df.set_index(['Environment','Wall','Panel'])
-        df = df.astype({'Xpos': int, 'Ypos': int, 'Width': int, 'Height': int, 'Flip':bool, 'Blit_Xpos':int, 'Blit_Ypos':int})
+        WallTiles = pd.read_csv('tiles.csv')
+        WallTiles = WallTiles.set_index(['Environment','Wall','Panel'])
+        WallTiles = WallTiles.astype({'Xpos': int, 'Ypos': int, 'Width': int, 'Height': int, 'Flip':bool, 'Blit_Xpos':int, 'Blit_Ypos':int})
 
         ##Create a new column for the Image
-        df['Image'] = None
-        df['Blit_Pos'] = None
-
-        self.df = df
+        WallTiles['Image'] = None
+        WallTiles['Blit_Pos'] = None
 
         ##Loop over the dataframe and create an image
-        for i in df.index:
-            locsize = (self.detail(i,'Xpos'),self.detail(i,'Ypos'),self.detail(i,'Width'),self.detail(i,'Height'))
-            flip = self.detail(i,'Flip')
-            print(self.detail(i,'File'))
-            print(self.imagesDF)
-            df.loc[i,['Image']] = sub_image(self.imagesDF.loc[self.detail(i,'File'),'Image'],locsize,3,flip)
+        for i in WallTiles.index:
+            locsize = ( WallTiles.loc[i,['Xpos']].item()
+                       ,WallTiles.loc[i,['Ypos']].item()
+                       ,WallTiles.loc[i,['Width']].item()
+                       ,WallTiles.loc[i,['Height']].item()
+                       )
+            flip = WallTiles.loc[i,['Flip']].item()
+            WallTiles.loc[i,['Image']] = sub_image(WallsetImages.loc[WallTiles.loc[i,['File']].item(),['Image']].item(),locsize,3,flip)
+
+        self.WallTiles = WallTiles
+
 
     def detail(self,x,y):
-        return self.df.loc[x,[y]].item()
+        return self.WallTiles.loc[x,[y]].item()
 
     def image(self, environment, wall, panel):
-        return self.df.loc[(environment,wall,panel),['Image']].item()
+        return self.WallTiles.loc[(environment,wall,panel),['Image']].item()
 
     def blitPos(self, environment, wall, panel, scalefactor=3):
-        blitPos = (self.df.loc[(environment, wall, panel),['Blit_Xpos']].item()*scalefactor,self.df.loc[(environment, wall, panel),['Blit_Ypos']].item()*scalefactor) 
+        blitPos = (self.WallTiles.loc[(environment, wall, panel),['Blit_Xpos']].item()*scalefactor,self.WallTiles.loc[(environment, wall, panel),['Blit_Ypos']].item()*scalefactor) 
         return blitPos

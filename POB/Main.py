@@ -1,4 +1,5 @@
 ##Import POB files
+import os
 from Dungeon            import *
 from Class_DungeonView  import *
 from Class_Player       import *
@@ -11,9 +12,13 @@ player = Player(dungeon)
 game = Game(player)
 game.launch()
 
-
 dungeonView = DungeonView(dungeon.levels[0].environment)
 game.dungeonviewInit(dungeonView)
+
+# print(game.dungeonview.dungeonTiletset.BG1)
+# print(game.window)
+# game.window.blit(game.dungeonview.dungeonTiletset.BG1,(0,0))
+# game.window.update()
 
 def main():
 
