@@ -1,5 +1,48 @@
 # Development Tools
 
+## Sprite Viewer (`tools/sprite_viewer.py`)
+
+Interactive tool to browse sprites within wallset images from `data/sprites.csv`.
+
+```bash
+python tools/sprite_viewer.py
+```
+
+### File Selection Screen
+
+On startup, select an image file from `data/imageFiles.csv`:
+
+| Key | Action |
+|-----|--------|
+| Up/Down | Navigate file list |
+| Enter | Select file and view sprites |
+| ESC | Quit |
+
+### Sprite Browsing Screen
+
+After selecting a file, browse sprites defined in that image:
+
+| Key | Action |
+|-----|--------|
+| A/D | Previous/Next sprite |
+| Home/End | Jump to first/last sprite |
+| Page Up/Down | Jump 10 sprites |
+| +/- | Zoom in/out |
+| Arrow Keys | Pan image (when zoomed) |
+| R | Reset zoom and pan |
+| B | Back to file selection |
+| ESC | Quit |
+
+### Features
+
+- **Red rectangle overlay** shows current sprite bounds in the image
+- **Corner markers** for better visibility at any zoom level
+- **Sprite preview** extracted and scaled in the metadata panel
+- **Sprite list** shows nearby sprites for context
+- **Zoom/pan** for precise inspection of sprite boundaries
+
+---
+
 ## Tile Viewer (`tools/tile_viewer.py`)
 
 Interactive tool to browse, inspect, and edit tile renderings from `data/tiles.csv`.

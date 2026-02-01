@@ -58,7 +58,8 @@ PyoftheBeholder/
 │   ├── UI/                   # Compass overlays (N.png, S.png, E.png, W.png)
 │   └── items/                # Item sprites
 └── tools/                     # Development tools
-    └── tile_viewer.py        # Interactive tile viewer/editor
+    ├── tile_viewer.py        # Interactive tile viewer/editor
+    └── sprite_viewer.py      # Sprite sheet browser
 ```
 
 ## Data Files
@@ -86,6 +87,29 @@ Defines screen panel positions and sizes:
 - `Width`, `Height` - Panel dimensions
 
 ## Tools
+
+### Sprite Viewer (`tools/sprite_viewer.py`)
+
+Browse sprites within wallset images from `data/sprites.csv`.
+
+```bash
+python tools/sprite_viewer.py
+```
+
+1. Select an image file from the list
+2. Browse sprites with A/D keys
+3. Red rectangle shows sprite bounds in the image
+4. Use +/- to zoom, arrow keys to pan
+
+| Key | Action |
+|-----|--------|
+| A/D | Previous/Next sprite |
+| +/- | Zoom in/out |
+| Arrow Keys | Pan image |
+| R | Reset zoom/pan |
+| B | Back to file selection |
+
+---
 
 ### Tile Viewer (`tools/tile_viewer.py`)
 
