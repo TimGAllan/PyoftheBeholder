@@ -62,11 +62,12 @@ Three-step tile loading:
 
 **DataFrame Structure:**
 ```python
-wall_tiles[Environment, Wall, Panel] → {
-    SpriteName, File, Xpos, Ypos, Width, Height,
+wall_tiles[Environment, dungeon_map_code, Panel] → {
+    Object, SpriteName, File, Xpos, Ypos, Width, Height,
     Flip, Blit_Xpos, Blit_Ypos, Blit_Xpos_Offset, Blit_Ypos_Offset, Image
 }
 ```
+Note: `dungeon_map_code` is the lookup key from level files, `Object` is the friendly name.
 
 ### DungeonLevel (`levels/sewer.py`)
 - `walls_x`: 2D grid of vertical walls ('X'=none, 'A'/'B'=variants)

@@ -4,23 +4,26 @@ All game data is stored in CSV files under `data/`. This data-driven approach en
 
 ## tiles.csv
 
-Maps tile combinations to sprites. Each row defines how a specific (Environment, Wall, Panel) combination renders.
+Maps tile combinations to sprites. Each row defines how a specific (Environment, dungeon_map_code, Panel) combination renders.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | Environment | string | Tileset theme (e.g., "Sewer") |
-| Wall | string | Wall variant ("A", "B", "BG1", "0"-"4" for doors) |
+| Object | string | Friendly name for the object type |
+| dungeon_map_code | string | Code used in level files for lookup ("A", "B", "2", "LeverUp", etc.) |
 | Panel | string | Screen panel ("LP1", "CF2", etc.) |
 | SpriteName | string | Reference to sprite in sprites.csv |
 | Flip | bool | Horizontally flip the sprite |
 | Blit_Xpos_Offset | int | Per-tile X position adjustment |
 | Blit_Ypos_Offset | int | Per-tile Y position adjustment |
 
+**Note:** The `dungeon_map_code` is used as the lookup key (indexed with Environment and Panel). The `Object` column is the friendly display name.
+
 **Example:**
 ```csv
-Environment,Wall,Panel,SpriteName,Flip,Blit_Xpos_Offset,Blit_Ypos_Offset
-Sewer,A,LP1,BRICK_WALLS_1_1_24_120,False,0,0
-Sewer,A,RP1,BRICK_WALLS_1_1_24_120,True,0,0
+Environment,Object,dungeon_map_code,Panel,SpriteName,Flip,Blit_Xpos_Offset,Blit_Ypos_Offset
+Sewer,A,A,LP1,BRICK_WALLS_1_1_24_120,False,0,0
+Sewer,A,A,RP1,BRICK_WALLS_1_1_24_120,True,0,0
 ```
 
 ## sprites.csv
@@ -79,9 +82,23 @@ Sewer,BRICK_WALLS.png
 Sewer,BRICK_BACKGROUND.png
 ```
 
-## walls.csv
+## objects.csv
 
-Wall type definitions (currently minimal).
+Object type definitions (walls, adornments, doors, etc.).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| Environment | string | Tileset theme |
+| Object | string | Friendly name for the object |
+| dungeon_map_code | string | Code used in level files |
+| Description | string | Human-readable description |
+
+**Example:**
+```csv
+Environment,Object,dungeon_map_code,Description
+Sewer,A,A,Wall variant A
+Sewer,LeverUp,LeverUp,Lever (up position)
+```
 
 ## Scale Factor
 
@@ -95,10 +112,10 @@ blit_y = (panels.Blit_Ypos + tiles.Blit_Ypos_Offset) * SCALE_FACTOR
 
 ## Level Data (levels/sewer.py)
 
-Level data is Python, not CSV:
+Level data is Python, not CSV. Values in wall grids and adornments must match `dungeon_map_code` in tiles.csv:
 
 ```python
-walls_x = [...]    # 2D grid: 'X'=no wall, 'A'/'B'=wall variants
+walls_x = [...]    # 2D grid: 'X'=no wall, 'A'/'B'=dungeon_map_codes for walls
 walls_y = [...]    # Horizontal walls
 clipping = [...]   # 0=walk, 1=block, 2=door open, 3=door closed, 4=special
 
@@ -107,7 +124,7 @@ switches = {
 }
 
 adornments = {
-    ('y', 6, 13): "LeverUp",  # axis, x, y → adornment name
+    ('y', 6, 13): "LeverUp",  # axis, x, y → dungeon_map_code for adornment
 }
 
 entry_pos = (0, 7, 13, 'E')  # Starting level, x, y, direction
@@ -120,8 +137,9 @@ entry_pos = (0, 7, 13, 'E')  # Starting level, x, y, direction
 2. Reference SpriteName in `tiles.csv`
 
 ### New Tile
-1. Add row to `tiles.csv` linking (Environment, Wall, Panel) to SpriteName
-2. Set Flip and offsets as needed
+1. Add row to `tiles.csv` linking (Environment, dungeon_map_code, Panel) to SpriteName
+2. Set Object to a friendly name, dungeon_map_code to the level file code
+3. Set Flip and offsets as needed
 
 ### New Panel
 1. Add row to `panels.csv` with position and size

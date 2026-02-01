@@ -22,7 +22,6 @@ Coordinate system for panel offsets:
     - Positive Y is South, Negative Y is North
     - Offsets are direction-dependent to achieve correct perspective
 """
-import os
 import pandas as pd
 from .dungeon_tileset import DungeonTileset
 from .utils import SCALE_FACTOR
@@ -67,7 +66,6 @@ class DungeonView:
         """
         self.environment = environment
         self.dungeon_tileset = DungeonTileset()
-        self.adornments_path = os.path.join('assets/Environments', self.environment, 'Adornments')
 
 
         # Panel list in render order (back to front)
@@ -89,21 +87,6 @@ class DungeonView:
         self.tiles = self._create_panel_dict(WallType.NO_ADORNMENT)
         self.tiles['BG'] = 'BG1'
         self.adornment_panels = self._create_panel_dict(WallType.NO_ADORNMENT)
-
-
-        # Panel image filenames for adornment rendering
-        self.panel_image_filenames = {
-            'FP4': 'FP4.png', 'KP4': 'KP4.png', 'LP4': 'LP4.png', 'RP4': 'RP4.png',
-            'FF3': 'F3.png', 'LF3': 'F3.png', 'CF3': 'F3.png', 'RF3': 'F3.png', 'KF3': 'F3.png',
-            'CD3': 'D3.png', 'LD3': 'LD3.png', 'RD3': 'RD3.png',
-            'FP3': 'FP3.png', 'LP3': 'LP3.png', 'RP3': 'RP3.png', 'KP3': 'KP3.png',
-            'LF2': 'F2.png', 'CF2': 'F2.png', 'RF2': 'F2.png',
-            'CD2': 'D2.png', 'LD2': 'LD2.png', 'RD2': 'RD2.png',
-            'LP2': 'LP2.png', 'RP2': 'RP2.png',
-            'LF1': 'F1.png', 'CF1': 'F1.png', 'RF1': 'F1.png',
-            'CD1': 'D1.png', 'LD1': 'LD1.png', 'RD1': 'RD1.png',
-            'LP1': 'LP1.png', 'RP1': 'RP1.png'
-        }
 
         # Load panel data from CSV
         panels_df = pd.read_csv('data/panels.csv')

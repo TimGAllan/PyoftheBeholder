@@ -776,7 +776,7 @@ class SpriteViewer:
             print(f"WARNING: Sprite '{sprite_name}' is referenced in {len(tiles_using_sprite)} tile(s) in tiles.csv!")
             print("These tiles will have invalid sprite references after deletion:")
             for _, tile in tiles_using_sprite.head(5).iterrows():
-                print(f"  - {tile['Environment']}/{tile['Wall']}/{tile['Panel']}")
+                print(f"  - {tile['Environment']}/{tile['dungeon_map_code']}/{tile['Panel']}")
             if len(tiles_using_sprite) > 5:
                 print(f"  ... and {len(tiles_using_sprite) - 5} more")
 

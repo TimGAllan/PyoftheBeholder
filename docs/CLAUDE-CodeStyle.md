@@ -70,11 +70,11 @@ sub_image(source, (x, y, width, height), SCALE_FACTOR, flip)
 
 Multi-indexed lookups:
 ```python
-# Create multi-index
-df = df.set_index(['Environment', 'Wall', 'Panel'])
+# Create multi-index (uses dungeon_map_code for level file lookups)
+df = df.set_index(['Environment', 'dungeon_map_code', 'Panel'])
 
 # Lookup
-tile = df.loc[(environment, wall, panel)]
+tile = df.loc[(environment, map_code, panel)]
 ```
 
 Joining DataFrames:

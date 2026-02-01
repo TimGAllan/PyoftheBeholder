@@ -42,7 +42,8 @@ class DungeonTileset(object):
         # Use left join to keep tiles even if SpriteName is empty/missing
         wall_tiles = wall_tiles.join(sprites, on='SpriteName', how='left')
         wall_tiles = wall_tiles.join(panels, on='Panel')
-        wall_tiles = wall_tiles.set_index(['Environment', 'Wall', 'Panel'])
+        # Index by dungeon_map_code (what's stored in level files), not Object (friendly name)
+        wall_tiles = wall_tiles.set_index(['Environment', 'dungeon_map_code', 'Panel'])
         wall_tiles = wall_tiles.astype({
             'Flip': bool,
             'Blit_Xpos_Offset': int,
@@ -73,11 +74,17 @@ class DungeonTileset(object):
 
         self.wall_tiles = wall_tiles
 
-    def image(self, environment, wall, panel):
-        return self.wall_tiles.loc[(environment, wall, panel), ['Image']].item()
+    def image(self, environment, obj, panel):
+        key = (environment, obj, panel)
+        if key not in self.wall_tiles.index:
+            return None
+        return self.wall_tiles.loc[key, 'Image']
 
-    def blit_pos(self, environment, wall, panel):
-        row = self.wall_tiles.loc[(environment, wall, panel)]
+    def blit_pos(self, environment, obj, panel):
+        key = (environment, obj, panel)
+        if key not in self.wall_tiles.index:
+            return None
+        row = self.wall_tiles.loc[key]
         blit_pos = (
             (row['Blit_Xpos'] + row['Blit_Xpos_Offset']) * SCALE_FACTOR,
             (row['Blit_Ypos'] + row['Blit_Ypos_Offset']) * SCALE_FACTOR

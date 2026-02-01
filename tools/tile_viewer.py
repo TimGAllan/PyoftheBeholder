@@ -8,11 +8,12 @@ Controls:
     A/D             - Previous/Next tile
     Home/End        - Jump to first/last tile
     Page Up/Down    - Jump 10 tiles
-    P               - Open tile picker (hierarchical: Environment > Wall > Panel)
+    P               - Open tile picker (hierarchical: Environment > Object > Panel)
     T               - Open sprite selector (change tile's sprite)
     F               - Toggle filter panel
     E               - Enter edit mode
     G               - Open grid settings
+    Delete          - Delete current tile (with Y/N confirmation)
     F5              - Reload all data from CSV files
     ESC             - Quit (or exit edit mode)
 
@@ -22,17 +23,32 @@ Tile Picker Controls:
     Left/Backspace  - Go back to previous level
     ESC             - Close picker (or go back at non-root level)
 
-Edit Mode Controls:
-    W/S             - Select field (up/down)
-    A/D             - Previous/Next tile
-    Arrow Keys      - Adjust blit position (Left/Right=X, Up/Down=Y)
-    0-9, -          - Type numeric value
-    Backspace       - Delete character
-    Enter           - Apply value and regenerate tile
-    Space           - Toggle Flip (when Flip selected)
+Edit Mode Controls (Navigation):
+    Up/Down         - Select field
+    Left/Right      - Previous/Next tile
+    Enter           - Start editing selected field
     F2              - Save all changes to CSV
     Z               - Undo changes for current tile
     ESC             - Exit edit mode
+
+Edit Mode Controls (Editing a Field):
+    For Object/MapCode:
+        a-z, 0-9, _, -  - Type characters
+        Backspace       - Delete character
+        Enter           - Apply value
+        ESC             - Cancel editing
+    For Position:
+        Arrow Keys      - Adjust X/Y offset (Left/Right=X, Up/Down=Y)
+        Enter/ESC       - Finish editing
+    For Flip:
+        Space           - Toggle value
+        Enter/ESC       - Finish editing
+
+Editable Fields:
+    Object           - Friendly name for the tile type
+    dungeon_map_code - Code used in level files for lookup
+    Position         - Blit X/Y offset (adjusts both with arrow keys)
+    Flip             - Horizontal flip toggle
 
 Grid Settings Mode Controls:
     Arrow Keys      - Navigate panel grid
@@ -68,6 +84,7 @@ class TileViewer:
     HELP_COLOR = (120, 120, 140)
     EDIT_HIGHLIGHT_COLOR = (80, 100, 140)
     EDIT_CURSOR_COLOR = (200, 200, 100)
+    EDIT_ACTIVE_COLOR = (100, 180, 100)  # Green for edit mode (matches sprite_viewer)
     MODIFIED_COLOR = (200, 150, 100)
     GRID_COLOR = (70, 90, 110)
     GRID_LABEL_COLOR = (100, 120, 140)
@@ -90,19 +107,21 @@ class TileViewer:
         self.current_index = 0
         self.filter_active = False
         self.filter_environment = None
-        self.filter_wall = None
+        self.filter_map_code = None
         self.filtered_tiles = self.tiles.copy()
 
         # Get unique values for filtering
         self.environments = sorted(set(idx[0] for idx in self.tiles))
-        self.walls = sorted(set(idx[1] for idx in self.tiles))
+        self.map_codes = sorted(set(idx[1] for idx in self.tiles))  # dungeon_map_code values
 
         # Edit mode state
         self.edit_mode = False
         self.selected_field_index = 0
-        self.editable_fields = ['Xpos', 'Ypos', 'Width', 'Height', 'Blit_Xpos_Offset', 'Blit_Ypos_Offset', 'Flip']
+        self.editable_fields = ['Object', 'dungeon_map_code', 'Position', 'Flip']
+        self.string_fields = ['Object', 'dungeon_map_code']  # Fields that accept text input
+        self.editing_field = False  # True when actively editing a field (Enter pressed)
         self.edit_buffer = ""
-        self.edit_overrides = {}  # {(env, wall, panel): {field: value, 'Image': surface}}
+        self.edit_overrides = {}  # {(env, obj, panel): {field: value, 'Image': surface}}
         self.unsaved_changes = False
 
         # Load panel positions and sizes from CSV
@@ -142,14 +161,14 @@ class TileViewer:
         self.grid_settings_mode = False
         self.grid_settings_cursor = 0
 
-        # Tile picker mode state (hierarchical: Environment -> Wall -> Panel)
+        # Tile picker mode state (hierarchical: Environment -> Object -> Panel)
         self.tile_picker_mode = False
-        self.picker_level = 0  # 0=Environment, 1=Wall, 2=Panel
+        self.picker_level = 0  # 0=Environment, 1=Object (uses map_code internally), 2=Panel
         self.picker_cursor = 0
         self.picker_scroll_offset = 0
         self.picker_visible_rows = 12
         self.picker_selected_env = None
-        self.picker_selected_wall = None
+        self.picker_selected_map_code = None
 
         # Sprite selector mode state (for changing a tile's sprite)
         self.sprite_selector_mode = False
@@ -159,7 +178,13 @@ class TileViewer:
         # Get list of unique sprite names from sprites.csv (with None option at top)
         self.sprite_names = ['(None)'] + list(self.tileset.wall_tiles['SpriteName'].unique())
 
+        # Delete confirmation state
+        self.delete_confirm_pending = False
+
         print(f"Loaded {len(self.tiles)} tiles")
+
+        # Open tile picker on startup
+        self.open_tile_picker()
 
     def run(self):
         """Main loop."""
@@ -188,6 +213,15 @@ class TileViewer:
 
     def handle_key(self, key):
         """Handle keyboard input. Returns False to quit."""
+        # Handle delete confirmation
+        if self.delete_confirm_pending:
+            if key == pg.K_y:
+                self.delete_current_tile()
+                self.delete_confirm_pending = False
+            elif key in (pg.K_n, pg.K_ESCAPE):
+                self.delete_confirm_pending = False
+            return True
+
         if key == pg.K_ESCAPE:
             return False
         elif key == pg.K_a:
@@ -216,6 +250,9 @@ class TileViewer:
             self.open_sprite_selector()
         elif key == pg.K_F5:
             self.reload()
+        elif key == pg.K_DELETE:
+            if self.filtered_tiles:
+                self.delete_confirm_pending = True
         return True
 
     def cycle_filter(self):
@@ -236,7 +273,7 @@ class TileViewer:
     def reset_filter(self):
         """Reset all filters."""
         self.filter_environment = None
-        self.filter_wall = None
+        self.filter_map_code = None
         self.apply_filter()
 
     def apply_filter(self):
@@ -244,7 +281,7 @@ class TileViewer:
         self.filtered_tiles = [
             idx for idx in self.tiles
             if (self.filter_environment is None or idx[0] == self.filter_environment)
-            and (self.filter_wall is None or idx[1] == self.filter_wall)
+            and (self.filter_map_code is None or idx[1] == self.filter_map_code)
         ]
         self.current_index = min(self.current_index, len(self.filtered_tiles) - 1)
         self.current_index = max(0, self.current_index)
@@ -268,7 +305,7 @@ class TileViewer:
 
         # Update unique values for filtering
         self.environments = sorted(set(idx[0] for idx in self.tiles))
-        self.walls = sorted(set(idx[1] for idx in self.tiles))
+        self.map_codes = sorted(set(idx[1] for idx in self.tiles))
 
         # Reload panel positions and sizes from CSV
         panels_df = pd.read_csv('data/panels.csv')
@@ -310,51 +347,69 @@ class TileViewer:
     def exit_edit_mode(self):
         """Exit edit mode."""
         self.edit_mode = False
+        self.editing_field = False
         self.edit_buffer = ""
 
     def handle_edit_key(self, key, unicode):
         """Handle keyboard input in edit mode. Returns False to quit."""
+        field = self.editable_fields[self.selected_field_index]
+
+        # When actively editing a field
+        if self.editing_field:
+            if key == pg.K_ESCAPE:
+                # Cancel editing, return to navigation
+                self.editing_field = False
+                self.edit_buffer = ""
+                return True
+            elif key == pg.K_RETURN:
+                # Apply and exit field editing
+                if field in self.string_fields:
+                    self.apply_edit()
+                self.editing_field = False
+                self.edit_buffer = ""
+                return True
+
+            # Field-specific editing behavior
+            if field == 'Position':
+                # Arrow keys adjust position offsets
+                if key == pg.K_LEFT:
+                    self.adjust_blit_pos('Blit_Xpos_Offset', -1)
+                elif key == pg.K_RIGHT:
+                    self.adjust_blit_pos('Blit_Xpos_Offset', 1)
+                elif key == pg.K_UP:
+                    self.adjust_blit_pos('Blit_Ypos_Offset', -1)
+                elif key == pg.K_DOWN:
+                    self.adjust_blit_pos('Blit_Ypos_Offset', 1)
+            elif field == 'Flip':
+                if key == pg.K_SPACE:
+                    self.toggle_flip()
+            elif field in self.string_fields:
+                if key == pg.K_BACKSPACE:
+                    self.edit_buffer = self.edit_buffer[:-1]
+                elif unicode and (unicode.isalnum() or unicode in '_-'):
+                    self.edit_buffer += unicode
+            return True
+
+        # Navigation mode (not actively editing a field)
         if key == pg.K_ESCAPE:
             self.exit_edit_mode()
             return True
-        elif key == pg.K_w:
-            self.selected_field_index = (self.selected_field_index - 1) % len(self.editable_fields)
-            self.edit_buffer = ""
-        elif key == pg.K_s:
-            self.selected_field_index = (self.selected_field_index + 1) % len(self.editable_fields)
-            self.edit_buffer = ""
-        elif key == pg.K_a:
-            self.current_index = max(0, self.current_index - 1)
-            self.edit_buffer = ""
-        elif key == pg.K_d:
-            self.current_index = min(len(self.filtered_tiles) - 1, self.current_index + 1)
-            self.edit_buffer = ""
-        elif key == pg.K_LEFT:
-            self.adjust_blit_pos('Blit_Xpos_Offset', -1)
-        elif key == pg.K_RIGHT:
-            self.adjust_blit_pos('Blit_Xpos_Offset', 1)
         elif key == pg.K_UP:
-            self.adjust_blit_pos('Blit_Ypos_Offset', -1)
+            self.selected_field_index = (self.selected_field_index - 1) % len(self.editable_fields)
         elif key == pg.K_DOWN:
-            self.adjust_blit_pos('Blit_Ypos_Offset', 1)
-        elif key == pg.K_SPACE:
-            # Toggle Flip field
-            field = self.editable_fields[self.selected_field_index]
-            if field == 'Flip':
-                self.toggle_flip()
+            self.selected_field_index = (self.selected_field_index + 1) % len(self.editable_fields)
+        elif key == pg.K_LEFT:
+            self.current_index = max(0, self.current_index - 1)
+        elif key == pg.K_RIGHT:
+            self.current_index = min(len(self.filtered_tiles) - 1, self.current_index + 1)
         elif key == pg.K_RETURN:
-            self.apply_edit()
-        elif key == pg.K_BACKSPACE:
-            self.edit_buffer = self.edit_buffer[:-1]
+            # Enter field editing mode
+            self.editing_field = True
+            self.edit_buffer = ""
         elif key == pg.K_F2:
             self.save_to_csv()
         elif key == pg.K_z:
             self.undo_current_sprite()
-        elif unicode and (unicode.isdigit() or unicode == '-'):
-            # Only allow digits and minus sign for numeric input
-            field = self.editable_fields[self.selected_field_index]
-            if field != 'Flip':
-                self.edit_buffer += unicode
         return True
 
     def handle_grid_settings_key(self, key):
@@ -393,12 +448,12 @@ class TileViewer:
         self.picker_cursor = 0
         self.picker_scroll_offset = 0
         self.picker_selected_env = None
-        self.picker_selected_wall = None
+        self.picker_selected_map_code = None
 
         # Try to pre-select based on current tile
         if self.filtered_tiles:
             current_idx = self.filtered_tiles[self.current_index]
-            env, wall, panel = current_idx
+            env, obj, panel = current_idx
             # Pre-select current environment
             if env in self.environments:
                 self.picker_cursor = self.environments.index(env)
@@ -410,19 +465,28 @@ class TileViewer:
             # Environment level
             return self.environments
         elif self.picker_level == 1:
-            # Wall level - get walls for selected environment
-            walls = sorted(set(
+            # MapCode level - get dungeon_map_codes for selected environment
+            map_codes = sorted(set(
                 idx[1] for idx in self.tiles
                 if idx[0] == self.picker_selected_env
             ))
-            return walls
+            return map_codes
         else:
-            # Panel level - get panels for selected environment and wall
+            # Panel level - get panels for selected environment and map_code
             panels = sorted(set(
                 idx[2] for idx in self.tiles
-                if idx[0] == self.picker_selected_env and idx[1] == self.picker_selected_wall
+                if idx[0] == self.picker_selected_env and idx[1] == self.picker_selected_map_code
             ))
             return panels
+
+    def get_object_name_for_map_code(self, env, map_code):
+        """Get the friendly Object name for a given environment and map_code."""
+        # Find any tile with this env and map_code to get the Object name
+        for idx in self.tiles:
+            if idx[0] == env and idx[1] == map_code:
+                row = self.tileset.wall_tiles.loc[idx]
+                return row['Object']
+        return map_code  # Fallback to map_code if not found
 
     def handle_tile_picker_key(self, key):
         """Handle keyboard input in tile picker mode."""
@@ -441,9 +505,9 @@ class TileViewer:
                 if self.picker_level == 0 and self.picker_selected_env in self.environments:
                     self.picker_cursor = self.environments.index(self.picker_selected_env)
                 elif self.picker_level == 1:
-                    walls = self.get_picker_items()
-                    if self.picker_selected_wall in walls:
-                        self.picker_cursor = walls.index(self.picker_selected_wall)
+                    map_codes = self.get_picker_items()
+                    if self.picker_selected_map_code in map_codes:
+                        self.picker_cursor = map_codes.index(self.picker_selected_map_code)
                 self._adjust_picker_scroll()
 
         elif key == pg.K_BACKSPACE:
@@ -455,9 +519,9 @@ class TileViewer:
                 if self.picker_level == 0 and self.picker_selected_env in self.environments:
                     self.picker_cursor = self.environments.index(self.picker_selected_env)
                 elif self.picker_level == 1:
-                    walls = self.get_picker_items()
-                    if self.picker_selected_wall in walls:
-                        self.picker_cursor = walls.index(self.picker_selected_wall)
+                    map_codes = self.get_picker_items()
+                    if self.picker_selected_map_code in map_codes:
+                        self.picker_cursor = map_codes.index(self.picker_selected_map_code)
                 self._adjust_picker_scroll()
 
         elif key in (pg.K_UP, pg.K_w):
@@ -487,21 +551,21 @@ class TileViewer:
         elif key in (pg.K_RETURN, pg.K_SPACE, pg.K_RIGHT):
             # Select current item and drill down or select tile
             if self.picker_level == 0:
-                # Selected environment, go to wall level
+                # Selected environment, go to object level
                 self.picker_selected_env = items[self.picker_cursor]
                 self.picker_level = 1
                 self.picker_cursor = 0
                 self.picker_scroll_offset = 0
             elif self.picker_level == 1:
-                # Selected wall, go to panel level
-                self.picker_selected_wall = items[self.picker_cursor]
+                # Selected object, go to panel level
+                self.picker_selected_map_code = items[self.picker_cursor]
                 self.picker_level = 2
                 self.picker_cursor = 0
                 self.picker_scroll_offset = 0
             else:
                 # Selected panel, select the tile and close
                 selected_panel = items[self.picker_cursor]
-                selected_idx = (self.picker_selected_env, self.picker_selected_wall, selected_panel)
+                selected_idx = (self.picker_selected_env, self.picker_selected_map_code, selected_panel)
 
                 # Find this tile in the full list
                 if selected_idx in self.tiles:
@@ -512,7 +576,7 @@ class TileViewer:
                     else:
                         # Reset filter to show selected tile
                         self.filter_environment = None
-                        self.filter_wall = None
+                        self.filter_map_code = None
                         self.filtered_tiles = self.tiles.copy()
                         self.current_index = tile_index
                     self.tile_picker_mode = False
@@ -526,9 +590,9 @@ class TileViewer:
                 if self.picker_level == 0 and self.picker_selected_env in self.environments:
                     self.picker_cursor = self.environments.index(self.picker_selected_env)
                 elif self.picker_level == 1:
-                    walls = self.get_picker_items()
-                    if self.picker_selected_wall in walls:
-                        self.picker_cursor = walls.index(self.picker_selected_wall)
+                    map_codes = self.get_picker_items()
+                    if self.picker_selected_map_code in map_codes:
+                        self.picker_cursor = map_codes.index(self.picker_selected_map_code)
                 self._adjust_picker_scroll()
 
     def _adjust_picker_scroll(self):
@@ -644,6 +708,8 @@ class TileViewer:
             return False
         idx = self.filtered_tiles[self.current_index]
         overrides = self.edit_overrides.get(idx, {})
+        if field == 'Position':
+            return 'Blit_Xpos_Offset' in overrides or 'Blit_Ypos_Offset' in overrides
         return field in overrides
 
     def toggle_flip(self):
@@ -680,14 +746,20 @@ class TileViewer:
         if field == 'Flip':
             return  # Flip is toggled with space, not typed
 
-        try:
-            value = int(self.edit_buffer)
-            self.set_override(field, value)
-            self.regenerate_sprite()
+        if field in self.string_fields:
+            # String fields - apply directly
+            self.set_override(field, self.edit_buffer)
             self.edit_buffer = ""
-        except ValueError:
-            # Invalid input, clear buffer
-            self.edit_buffer = ""
+        else:
+            # Numeric fields
+            try:
+                value = int(self.edit_buffer)
+                self.set_override(field, value)
+                self.regenerate_sprite()
+                self.edit_buffer = ""
+            except ValueError:
+                # Invalid input, clear buffer
+                self.edit_buffer = ""
 
     def regenerate_sprite(self):
         """Regenerate the sprite image with current override values."""
@@ -731,6 +803,56 @@ class TileViewer:
             # Check if there are still unsaved changes
             self.unsaved_changes = bool(self.edit_overrides)
 
+    def delete_current_tile(self):
+        """Delete the current tile from tiles.csv and update in-memory data."""
+        if not self.filtered_tiles:
+            return
+
+        idx = self.filtered_tiles[self.current_index]
+        env, map_code, panel = idx  # Index is (Environment, dungeon_map_code, Panel)
+
+        # Load and modify tiles.csv
+        tiles_df = pd.read_csv('data/tiles.csv')
+
+        # Find and remove the matching row (use dungeon_map_code column)
+        mask = (tiles_df['Environment'] == env) & \
+               (tiles_df['dungeon_map_code'] == map_code) & \
+               (tiles_df['Panel'] == panel)
+
+        if mask.sum() == 0:
+            print(f"Warning: Tile not found in CSV: {idx}")
+            return
+
+        # Remove the row(s) matching this tile
+        tiles_df = tiles_df[~mask]
+
+        # Save back to CSV
+        tiles_df.to_csv('data/tiles.csv', index=False)
+
+        # Remove from in-memory tileset
+        if idx in self.tileset.wall_tiles.index:
+            self.tileset.wall_tiles = self.tileset.wall_tiles.drop(idx)
+
+        # Remove from any edit overrides
+        if idx in self.edit_overrides:
+            del self.edit_overrides[idx]
+
+        # Update tiles list
+        self.tiles = list(self.tileset.wall_tiles.index)
+
+        # Update unique values for filtering
+        self.environments = sorted(set(i[0] for i in self.tiles))
+        self.map_codes = sorted(set(i[1] for i in self.tiles))
+
+        # Re-apply filter
+        self.apply_filter()
+
+        # Adjust current index if needed
+        if self.current_index >= len(self.filtered_tiles):
+            self.current_index = max(0, len(self.filtered_tiles) - 1)
+
+        print(f"Deleted tile: {env}/{map_code}/{panel}")
+
     def save_to_csv(self):
         """Save all modifications to the CSV files."""
         if not self.edit_overrides:
@@ -747,15 +869,38 @@ class TileViewer:
 
         tiles_df = pd.read_csv('data/tiles.csv')
 
+        # Load objects.csv for Object/dungeon_map_code updates
+        objects_df = pd.read_csv('data/objects.csv')
+
         # Track what we've modified
         modified_sprites = set()
-        modified_panels = set()
+        modified_tiles = 0
 
         # Apply overrides
         for idx, overrides in self.edit_overrides.items():
-            env, wall, panel = idx
+            env, map_code, panel = idx  # Index is (Environment, dungeon_map_code, Panel)
             row = self.tileset.wall_tiles.loc[idx]
             sprite_name = row['SpriteName']
+
+            # Find the tile row mask (specific panel)
+            mask = (tiles_df['Environment'] == env) & \
+                   (tiles_df['dungeon_map_code'] == map_code) & \
+                   (tiles_df['Panel'] == panel)
+
+            # Broader mask for Object/dungeon_map_code changes (all panels with same env/map_code)
+            broad_mask = (tiles_df['Environment'] == env) & \
+                         (tiles_df['dungeon_map_code'] == map_code)
+
+            # Update Object in tiles.csv for ALL tiles with same env/map_code
+            if 'Object' in overrides:
+                tiles_df.loc[broad_mask, 'Object'] = overrides['Object']
+                modified_tiles += broad_mask.sum()
+
+            # Update dungeon_map_code in tiles.csv for ALL tiles with same env/map_code
+            if 'dungeon_map_code' in overrides:
+                new_map_code = overrides['dungeon_map_code']
+                tiles_df.loc[broad_mask, 'dungeon_map_code'] = new_map_code
+                modified_tiles += broad_mask.sum()
 
             # Update sprite source coordinates
             for field in ['Xpos', 'Ypos', 'Width', 'Height']:
@@ -766,44 +911,71 @@ class TileViewer:
             # Update tile blit position offsets in tiles.csv
             for field in ['Blit_Xpos_Offset', 'Blit_Ypos_Offset']:
                 if field in overrides:
-                    mask = (tiles_df['Environment'] == env) & \
-                           (tiles_df['Wall'] == wall) & \
-                           (tiles_df['Panel'] == panel)
                     tiles_df.loc[mask, field] = overrides[field]
 
             # Update flip in tiles.csv
             if 'Flip' in overrides:
-                mask = (tiles_df['Environment'] == env) & \
-                       (tiles_df['Wall'] == wall) & \
-                       (tiles_df['Panel'] == panel)
                 tiles_df.loc[mask, 'Flip'] = overrides['Flip']
 
             # Update SpriteName in tiles.csv
             if 'SpriteName' in overrides:
-                mask = (tiles_df['Environment'] == env) & \
-                       (tiles_df['Wall'] == wall) & \
-                       (tiles_df['Panel'] == panel)
                 tiles_df.loc[mask, 'SpriteName'] = overrides['SpriteName']
+
+            # Update objects.csv if Object or dungeon_map_code changed
+            if 'Object' in overrides or 'dungeon_map_code' in overrides:
+                new_obj = overrides.get('Object', row['Object'])
+                new_map_code = overrides.get('dungeon_map_code', map_code)
+
+                # Check if this object entry exists in objects.csv
+                obj_mask = (objects_df['Environment'] == env) & \
+                           (objects_df['dungeon_map_code'] == map_code)
+
+                if obj_mask.sum() > 0:
+                    # Update existing entry
+                    objects_df.loc[obj_mask, 'Object'] = new_obj
+                    objects_df.loc[obj_mask, 'dungeon_map_code'] = new_map_code
+                else:
+                    # Check if new map_code already exists
+                    new_mask = (objects_df['Environment'] == env) & \
+                               (objects_df['dungeon_map_code'] == new_map_code)
+                    if new_mask.sum() == 0:
+                        # Add new entry
+                        new_row = pd.DataFrame([{
+                            'Environment': env,
+                            'Object': new_obj,
+                            'dungeon_map_code': new_map_code,
+                            'Description': ''
+                        }])
+                        objects_df = pd.concat([objects_df, new_row], ignore_index=True)
 
         # Save back to CSV
         sprites_df.reset_index().to_csv('data/sprites.csv', index=False)
         panels_df.reset_index().to_csv('data/panels.csv', index=False)
         tiles_df.to_csv('data/tiles.csv', index=False)
+        objects_df.to_csv('data/objects.csv', index=False)
 
         # Update the tileset's dataframes to reflect saved changes
         for idx, overrides in self.edit_overrides.items():
-            for field in ['Xpos', 'Ypos', 'Width', 'Height', 'Blit_Xpos_Offset', 'Blit_Ypos_Offset', 'Flip', 'SpriteName', 'File']:
+            for field in ['Xpos', 'Ypos', 'Width', 'Height', 'Blit_Xpos_Offset', 'Blit_Ypos_Offset', 'Flip', 'SpriteName', 'File', 'Object']:
                 if field in overrides:
                     self.tileset.wall_tiles.loc[idx, field] = overrides[field]
             # Keep the regenerated image
             if 'Image' in overrides:
                 self.tileset.wall_tiles.loc[idx, 'Image'] = overrides['Image']
 
+        # If dungeon_map_code or Object changed, we need to reload to update all affected tiles
+        needs_reload = any('dungeon_map_code' in o or 'Object' in o for o in self.edit_overrides.values())
+
         # Clear overrides and mark as saved
         self.edit_overrides = {}
         self.unsaved_changes = False
 
-        print(f"Saved changes: {len(modified_sprites)} sprites, {len(modified_panels)} panels")
+        print(f"Saved changes: {len(modified_sprites)} sprites, {modified_tiles} tile fields")
+
+        # Reload if Object or dungeon_map_code changed (affects multiple tiles)
+        if needs_reload:
+            print("Reloading to sync changes...")
+            self.reload()
 
     def get_current_sprite_data(self):
         """Get all data for the current sprite, with overrides applied."""
@@ -816,7 +988,8 @@ class TileViewer:
 
         return {
             'Environment': idx[0],
-            'Wall': idx[1],
+            'dungeon_map_code': overrides.get('dungeon_map_code', idx[1]),  # From index or override
+            'Object': overrides.get('Object', row['Object']),  # Friendly name from row or override
             'Panel': idx[2],
             'SpriteName': overrides.get('SpriteName', row['SpriteName']),
             'File': overrides.get('File', row['File']),
@@ -874,7 +1047,7 @@ class TileViewer:
                 edit_text = " [EDIT MODE*]"
 
         title = f"Tile Viewer - {self.current_index + 1}/{len(self.filtered_tiles)} tiles{filter_text}{edit_text}"
-        title_color = self.MODIFIED_COLOR if self.edit_mode else self.TEXT_COLOR
+        title_color = self.EDIT_ACTIVE_COLOR if self.edit_mode else self.TEXT_COLOR
         title_surf = self.font_large.render(title, True, title_color)
         self.screen.blit(title_surf, (20, 17))
 
@@ -910,25 +1083,24 @@ class TileViewer:
                 blit_y = vy + (data['Blit_Ypos'] + data['Blit_Ypos_Offset']) * SCALE_FACTOR
                 self.screen.blit(data['Image'], (blit_x, blit_y))
 
-            # Highlight current panel (even if no sprite)
+            # Highlight current panel (even if no sprite or partially off-screen)
             panel = data['Panel']
             if panel in self.panel_positions:
                 pos = self.panel_positions[panel]
                 size = self.panel_sizes.get(panel, (50, 50))
-                # Only highlight if panel is visible (not off-screen)
-                if pos[0] >= 0 and pos[1] >= 0:
-                    highlight_rect = pg.Rect(vx + pos[0], vy + pos[1], size[0], size[1])
-                    pg.draw.rect(self.screen, self.HIGHLIGHT_COLOR, highlight_rect, 2)
+                # Draw highlight even for partially off-screen panels (Pygame clips automatically)
+                highlight_rect = pg.Rect(vx + pos[0], vy + pos[1], size[0], size[1])
+                pg.draw.rect(self.screen, self.HIGHLIGHT_COLOR, highlight_rect, 2)
 
-                    # Draw center gridlines (red crosshairs across entire viewport)
-                    center_x = vx + pos[0] + size[0] // 2
-                    center_y = vy + pos[1] + size[1] // 2
-                    # Vertical line (full viewport height)
-                    pg.draw.line(self.screen, (255, 0, 0),
-                                 (center_x, vy), (center_x, vy + viewport_h), 1)
-                    # Horizontal line (full viewport width)
-                    pg.draw.line(self.screen, (255, 0, 0),
-                                 (vx, center_y), (vx + viewport_w, center_y), 1)
+                # Draw center gridlines (red crosshairs across entire viewport)
+                center_x = vx + pos[0] + size[0] // 2
+                center_y = vy + pos[1] + size[1] // 2
+                # Vertical line (full viewport height)
+                pg.draw.line(self.screen, (255, 0, 0),
+                             (center_x, vy), (center_x, vy + viewport_h), 1)
+                # Horizontal line (full viewport width)
+                pg.draw.line(self.screen, (255, 0, 0),
+                             (vx, center_y), (vx + viewport_w, center_y), 1)
 
     def draw_panel_grid(self, vx, vy):
         """Draw grid boxes for each panel position."""
@@ -1071,7 +1243,7 @@ class TileViewer:
         pg.draw.rect(self.screen, self.HIGHLIGHT_COLOR, panel_rect, 2)
 
         # Title based on level
-        level_titles = ["Select Environment", "Select Wall", "Select Panel"]
+        level_titles = ["Select Environment", "Select Object", "Select Panel"]
         title = self.font_large.render(level_titles[self.picker_level], True, self.TEXT_COLOR)
         self.screen.blit(title, (panel_x + 20, panel_y + 15))
 
@@ -1080,8 +1252,10 @@ class TileViewer:
         breadcrumb_parts = []
         if self.picker_selected_env:
             breadcrumb_parts.append(self.picker_selected_env)
-        if self.picker_selected_wall:
-            breadcrumb_parts.append(self.picker_selected_wall)
+        if self.picker_selected_map_code:
+            # Show Object name in breadcrumb
+            obj_name = self.get_object_name_for_map_code(self.picker_selected_env, self.picker_selected_map_code)
+            breadcrumb_parts.append(obj_name)
 
         if breadcrumb_parts:
             breadcrumb_text = " > ".join(breadcrumb_parts)
@@ -1119,7 +1293,7 @@ class TileViewer:
             # Draw item based on level
             if self.picker_level == 2:
                 # Panel level - show thumbnail and sprite info
-                tile_idx = (self.picker_selected_env, self.picker_selected_wall, item)
+                tile_idx = (self.picker_selected_env, self.picker_selected_map_code, item)
                 if tile_idx in self.tileset.wall_tiles.index:
                     row = self.tileset.wall_tiles.loc[tile_idx]
                     image = row['Image']
@@ -1145,23 +1319,26 @@ class TileViewer:
                     sprite_surf = self.font_small.render(sprite_text, True, self.LABEL_COLOR)
                     self.screen.blit(sprite_surf, (panel_x + 120, row_y + 2))
             else:
-                # Environment or Wall level - show name and count
+                # Environment or Object level - show name and count
                 text_color = self.EDIT_CURSOR_COLOR if is_selected else self.TEXT_COLOR
 
-                # Count items at next level
+                # Count items at next level and get display name
                 if self.picker_level == 0:
                     count = len(set(idx[1] for idx in self.tiles if idx[0] == item))
-                    count_label = f"({count} walls)"
+                    count_label = f"({count} objects)"
+                    display_name = item  # Environment name
                 else:
+                    # Level 1: item is map_code, display Object name
                     count = len(set(idx[2] for idx in self.tiles
                                    if idx[0] == self.picker_selected_env and idx[1] == item))
                     count_label = f"({count} panels)"
+                    display_name = self.get_object_name_for_map_code(self.picker_selected_env, item)
 
                 # Draw arrow indicator for drill-down
                 arrow_surf = self.font.render(">", True, text_color)
                 self.screen.blit(arrow_surf, (panel_x + 25, row_y))
 
-                item_surf = self.font.render(str(item), True, text_color)
+                item_surf = self.font.render(str(display_name), True, text_color)
                 self.screen.blit(item_surf, (panel_x + 50, row_y))
 
                 count_surf = self.font_small.render(count_label, True, self.LABEL_COLOR)
@@ -1216,7 +1393,7 @@ class TileViewer:
 
         # Show current tile info
         if data:
-            info_text = f"Current: {data['Environment']}/{data['Wall']}/{data['Panel']}"
+            info_text = f"Current: {data['Environment']}/{data['dungeon_map_code']}/{data['Panel']}"
             info_surf = self.font_small.render(info_text, True, self.LABEL_COLOR)
             self.screen.blit(info_surf, (panel_x + 300, panel_y + 20))
 
@@ -1364,10 +1541,12 @@ class TileViewer:
         # Handle empty/None sprite
         sprite_name = data['SpriteName'] if data['SpriteName'] else "(None)"
         file_name = data['File'] if data['File'] and str(data['File']) != 'nan' else "-"
+        value_col = panel_rect.x + 140  # Column for values
 
         fields = [
             ("Environment", data['Environment']),
-            ("Wall", data['Wall']),
+            ("Object", data['Object']),
+            ("MapCode", data['dungeon_map_code']),
             ("Panel", data['Panel']),
             ("", ""),  # Spacer
             ("SpriteName", sprite_name),
@@ -1380,14 +1559,11 @@ class TileViewer:
             total_blit_y = data['Blit_Ypos'] + data['Blit_Ypos_Offset']
             fields.extend([
                 ("", ""),  # Spacer
-                ("Source Position", f"({data['Xpos']}, {data['Ypos']})"),
-                ("Source Size", f"{data['Width']} x {data['Height']}"),
                 ("Flip", str(data['Flip'])),
-                ("", ""),  # Spacer
-                ("Panel Blit Pos", f"({data['Blit_Xpos']}, {data['Blit_Ypos']})"),
+                ("Panel Blit", f"({data['Blit_Xpos']}, {data['Blit_Ypos']})"),
                 ("Blit Offset", f"({data['Blit_Xpos_Offset']}, {data['Blit_Ypos_Offset']})"),
-                ("Total Blit Pos", f"({total_blit_x}, {total_blit_y})"),
-                ("Scaled Blit Pos", f"({total_blit_x * SCALE_FACTOR}, {total_blit_y * SCALE_FACTOR})"),
+                ("Total Blit", f"({total_blit_x}, {total_blit_y})"),
+                ("Scaled Blit", f"({total_blit_x * SCALE_FACTOR}, {total_blit_y * SCALE_FACTOR})"),
             ])
 
         if data['Image']:
@@ -1406,21 +1582,21 @@ class TileViewer:
 
             # Draw value (may need to truncate long strings)
             value_str = str(value)
-            if len(value_str) > 45:
-                value_str = value_str[:42] + "..."
+            if len(value_str) > 40:
+                value_str = value_str[:37] + "..."
             value_surf = self.font.render(value_str, True, self.TEXT_COLOR)
-            self.screen.blit(value_surf, (panel_rect.x + 150, y))
+            self.screen.blit(value_surf, (value_col, y))
 
             y += 25
 
     def draw_edit_mode_metadata(self, panel_rect, data):
         """Draw metadata panel in edit mode with editable fields."""
         y = panel_rect.y + 15
+        value_col = panel_rect.x + 200  # Column for values (moved right to avoid overlap)
 
-        # Non-editable header fields
+        # Non-editable header fields (Environment and Panel only)
         header_fields = [
             ("Environment", data['Environment']),
-            ("Wall", data['Wall']),
             ("Panel", data['Panel']),
         ]
 
@@ -1428,43 +1604,58 @@ class TileViewer:
             label_surf = self.font.render(f"{label}:", True, self.LABEL_COLOR)
             self.screen.blit(label_surf, (panel_rect.x + 15, y))
             value_surf = self.font.render(str(value), True, self.TEXT_COLOR)
-            self.screen.blit(value_surf, (panel_rect.x + 150, y))
+            self.screen.blit(value_surf, (value_col, y))
             y += 25
 
         y += 10  # Spacer
 
-        # Editable fields
+        # Editable fields (includes Object, dungeon_map_code, Position, Flip)
         for i, field in enumerate(self.editable_fields):
             is_selected = (i == self.selected_field_index)
+            is_editing = is_selected and self.editing_field
             is_modified = self.is_field_modified(field)
 
             # Draw selection highlight
             if is_selected:
+                highlight_color = self.EDIT_ACTIVE_COLOR if is_editing else self.EDIT_HIGHLIGHT_COLOR
                 highlight_rect = pg.Rect(panel_rect.x + 10, y - 2, panel_rect.width - 20, 22)
-                pg.draw.rect(self.screen, self.EDIT_HIGHLIGHT_COLOR, highlight_rect)
+                pg.draw.rect(self.screen, highlight_color, highlight_rect, 0 if is_editing else 0)
+                pg.draw.rect(self.screen, highlight_color, highlight_rect, 2 if is_editing else 0)
 
             # Draw selection indicator
             indicator = ">" if is_selected else " "
-            indicator_surf = self.font.render(indicator, True, self.EDIT_CURSOR_COLOR)
+            indicator_color = self.BG_COLOR if is_editing else self.EDIT_ACTIVE_COLOR
+            indicator_surf = self.font.render(indicator, True, indicator_color)
             self.screen.blit(indicator_surf, (panel_rect.x + 15, y))
 
             # Draw label with modified indicator
             label_text = f"{field}:" + ("*" if is_modified else "")
-            label_color = self.MODIFIED_COLOR if is_modified else self.LABEL_COLOR
+            if is_editing:
+                label_color = self.BG_COLOR  # Dark text on green background
+            elif is_modified:
+                label_color = self.MODIFIED_COLOR
+            else:
+                label_color = self.LABEL_COLOR
             label_surf = self.font.render(label_text, True, label_color)
             self.screen.blit(label_surf, (panel_rect.x + 30, y))
 
-            # Draw value or edit buffer
-            if is_selected and self.edit_buffer:
-                # Show edit buffer with cursor
+            # Draw value based on field type
+            if field == 'Position':
+                # Show both X and Y offsets
+                x_off = data['Blit_Xpos_Offset']
+                y_off = data['Blit_Ypos_Offset']
+                value_str = f"({x_off}, {y_off})"
+                value_color = self.BG_COLOR if is_editing else (self.MODIFIED_COLOR if is_modified else self.TEXT_COLOR)
+            elif is_editing and field in self.string_fields:
+                # Show edit buffer with cursor for string fields
                 value_str = self.edit_buffer + "_"
-                value_color = self.EDIT_CURSOR_COLOR
+                value_color = self.BG_COLOR  # Dark text on green background
             else:
                 value_str = str(data[field])
                 value_color = self.MODIFIED_COLOR if is_modified else self.TEXT_COLOR
 
             value_surf = self.font.render(value_str, True, value_color)
-            self.screen.blit(value_surf, (panel_rect.x + 150, y))
+            self.screen.blit(value_surf, (value_col, y))
 
             y += 25
 
@@ -1478,16 +1669,35 @@ class TileViewer:
                 f"{data['Image'].get_width()} x {data['Image'].get_height()}",
                 True, self.TEXT_COLOR
             )
-            self.screen.blit(value_surf, (panel_rect.x + 150, y))
+            self.screen.blit(value_surf, (value_col, y))
             y += 25
 
-        # Show edit instructions
+        # Show edit instructions based on current state
         y += 15
-        instructions = [
-            "Type value + Enter to apply",
-            "Space to toggle Flip",
-            "S to save, Z to undo",
-        ]
+        if self.editing_field:
+            field = self.editable_fields[self.selected_field_index]
+            if field == 'Position':
+                instructions = [
+                    "Arrow keys to adjust X/Y",
+                    "Enter/Esc to finish",
+                ]
+            elif field == 'Flip':
+                instructions = [
+                    "Space to toggle",
+                    "Enter/Esc to finish",
+                ]
+            else:
+                instructions = [
+                    "Type value, Enter to apply",
+                    "Esc to cancel",
+                ]
+        else:
+            instructions = [
+                "Up/Down to navigate",
+                "Left/Right to change tile",
+                "Enter to edit field",
+                "F2 to save, Z to undo",
+            ]
         for line in instructions:
             help_surf = self.font_small.render(line, True, self.HELP_COLOR)
             self.screen.blit(help_surf, (panel_rect.x + 15, y))
@@ -1499,14 +1709,29 @@ class TileViewer:
         pg.draw.rect(self.screen, self.PANEL_COLOR, help_rect)
         pg.draw.rect(self.screen, self.BORDER_COLOR, help_rect, 1)
 
-        if self.grid_settings_mode:
+        if self.delete_confirm_pending:
+            help_text = "Delete this tile? [Y] Yes  [N] No"
+            help_color = self.MODIFIED_COLOR  # Orange/warning color
+        elif self.grid_settings_mode:
             help_text = "[Arrows] Navigate  [Space] Toggle  [A] All  [N] None  [ESC] Done"
+            help_color = self.HELP_COLOR
         elif self.edit_mode:
-            help_text = "[W/S] Field  [A/D] Tile  [Arrows] Blit Pos  [0-9] Value  [Enter] Apply  [Space] Flip  [F2] Save  [Z] Undo  [ESC] Exit"
+            if self.editing_field:
+                field = self.editable_fields[self.selected_field_index]
+                if field == 'Position':
+                    help_text = "[Arrows] Adjust X/Y  [Enter/ESC] Done"
+                elif field == 'Flip':
+                    help_text = "[Space] Toggle  [Enter/ESC] Done"
+                else:
+                    help_text = "Type value  [Enter] Apply  [ESC] Cancel"
+            else:
+                help_text = "[Up/Down] Field  [Left/Right] Tile  [Enter] Edit  [F2] Save  [Z] Undo  [ESC] Exit"
+            help_color = self.HELP_COLOR
         else:
-            help_text = "[A/D] Prev/Next  [P] Picker  [T] Sprite  [E] Edit  [G] Grid  [F] Filter  [F5] Reload  [ESC] Quit"
+            help_text = "[A/D] Prev/Next  [P] Picker  [T] Sprite  [E] Edit  [G] Grid  [F] Filter  [Del] Delete  [F5] Reload  [ESC] Quit"
+            help_color = self.HELP_COLOR
 
-        help_surf = self.font_small.render(help_text, True, self.HELP_COLOR)
+        help_surf = self.font_small.render(help_text, True, help_color)
         self.screen.blit(help_surf, (help_rect.centerx - help_surf.get_width() // 2, help_rect.y + 15))
 
 

@@ -36,7 +36,7 @@ class Game(object):
         pg.mouse.set_visible(False)
 
         scale_factor = 2
-        self.cursor_image = pg.image.load("assets/items/itemicn.png")
+        self.cursor_image = pg.image.load("assets/Environments/itemicn.png")
 
         cursor_size = (
             self.cursor_image.get_width() * scale_factor,
@@ -70,7 +70,8 @@ class Game(object):
                     '2',
                     panel
                 )
-                self.window.blit(img, self.dungeon_view.panel_positions[panel])
+                if img is not None:
+                    self.window.blit(img, self.dungeon_view.panel_positions[panel])
 
                 # If door is closed (type '3'), also render the door sprite on top
                 if tile_value == '3':
@@ -79,13 +80,15 @@ class Game(object):
                         '3',
                         panel
                     )
-                    # Use the blit position offset from CSV for door positioning
-                    blit_offset = self.dungeon_view.dungeon_tileset.blit_pos(
-                        self.dungeon_view.environment,
-                        '3',
-                        panel
-                    )
-                    self.window.blit(img, blit_offset)
+                    if img is not None:
+                        # Use the blit position offset from CSV for door positioning
+                        blit_offset = self.dungeon_view.dungeon_tileset.blit_pos(
+                            self.dungeon_view.environment,
+                            '3',
+                            panel
+                        )
+                        if blit_offset is not None:
+                            self.window.blit(img, blit_offset)
 
             # Render regular wall panels (skip empty 'X' and clipping values 0,1,4)
             elif tile_value not in 'X014':
@@ -94,21 +97,25 @@ class Game(object):
                     tile_value,
                     panel
                 )
-                self.window.blit(img, self.dungeon_view.panel_positions[panel])
+                if img is not None:
+                    self.window.blit(img, self.dungeon_view.panel_positions[panel])
 
             # Render the Adornment
-            if self.dungeon_view.adornment_panels[panel] != 'x':
-                img = pg.transform.scale(
-                    pg.image.load(os.path.join(
-                        self.dungeon_view.adornments_path,
-                        self.dungeon_view.adornment_panels[panel],
-                        self.dungeon_view.panel_image_filenames[panel]
-                    )),
-                    self.dungeon_view.panel_sizes[panel]
+            adornment_name = self.dungeon_view.adornment_panels[panel]
+            if adornment_name != 'x':
+                img = self.dungeon_view.dungeon_tileset.image(
+                    self.dungeon_view.environment,
+                    adornment_name,
+                    panel
                 )
-                # Use convert_alpha() to preserve PNG alpha transparency
-                img = img.convert_alpha()
-                self.window.blit(img, self.dungeon_view.panel_positions[panel])
+                if img is not None:
+                    blit_pos = self.dungeon_view.dungeon_tileset.blit_pos(
+                        self.dungeon_view.environment,
+                        adornment_name,
+                        panel
+                    )
+                    if blit_pos is not None:
+                        self.window.blit(img, blit_pos)
 
         # Render the UI
         ui = pg.transform.scale(

@@ -1,0 +1,56 @@
+Environment,Object,dungeon_map_code,Description
+Blue,2,2,Open doorway frame
+Blue,3,3,Closed door
+Blue,A,A,Wall variant A
+Blue,B,B,Wall variant B
+Blue,BG1,BG1,Background 1
+Blue,BG2,BG2,Background 2
+Blue,D,D,Wall variant D
+Sewer,BRICK_DOORWAY,2,Open doorway frame
+Sewer,DOOR_IRON,3,Closed door
+Sewer,4,4,Door variant 4
+Sewer,WALL_TYPE_A,A,Wall variant A
+Sewer,Alcove,Alcove,Wall alcove/niche
+Sewer,WALL_TYPE_B,B,Wall variant B
+Sewer,BG1,BG1,Background 1
+Sewer,BG2,BG2,Background 2
+Sewer,Bones,Bones,Bone pile decoration
+Sewer,BrickArch,BrickArch,Brick archway
+Sewer,BrickColumn,BrickColumn,Brick column/pillar
+Sewer,ButtonRed,ButtonRed,Red button (unpressed)
+Sewer,ButtonRedPressed,ButtonRedPressed,Red button (pressed)
+Sewer,Chain,Chain,Hanging chain
+Sewer,ChainBroken,ChainBroken,Broken chain
+Sewer,ChestClosed,ChestClosed,Closed chest
+Sewer,ChestOpen,ChestOpen,Open chest
+Sewer,Cobweb,Cobweb,Cobweb decoration
+Sewer,Crate,Crate,Wooden crate
+Sewer,BRICK_UP,D,Wall variant D
+Sewer,DoorBars,DoorBars,Barred door
+Sewer,DoorEye,DoorEye,Door with eye symbol
+Sewer,DoorGrate,DoorGrate,Grated door
+Sewer,DoorMonster,DoorMonster,Door with monster carving
+Sewer,DoorSpider,DoorSpider,Door with spider symbol
+Sewer,DoorWood,DoorWood,Wooden door
+Sewer,BRICK_DOWN,E,Wall variant E
+Sewer,EyesBeholder1,EyesBeholder1,Beholder eyes decoration 1
+Sewer,EyesBeholder2,EyesBeholder2,Beholder eyes decoration 2
+Sewer,BRICK_PORTAL,F,Wall variant F
+Sewer,Grate,Grate,Wall grate/vent
+Sewer,Handle,Handle,Pull handle (up)
+Sewer,HandlePulled,HandlePulled,Pull handle (pulled)
+Sewer,KeyHole,KeyHole,Keyhole
+Sewer,Ladder,Ladder,Ladder going up
+Sewer,LadderDown,LadderDown,Ladder going down
+Sewer,LeverDown,LeverDown,Lever (down position)
+Sewer,LeverUp,LeverUp,Lever (up position)
+Sewer,Portcullis,Portcullis,Portcullis gate (closed)
+Sewer,PortcullisOpen,PortcullisOpen,Portcullis gate (open)
+Sewer,PressurePlate,PressurePlate,Floor pressure plate
+Sewer,Rubble,Rubble,Rubble pile
+Sewer,SEWER_ROCKFALL,R,Blocking rubble pile
+Sewer,Shelf,Shelf,Wall shelf
+Sewer,Skull,Skull,Skull decoration
+Sewer,StairsDown,StairsDown,Stairs going down
+Sewer,StairsUp,StairsUp,Stairs going up
+Sewer,Torch,Torch,Wall torch

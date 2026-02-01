@@ -48,11 +48,11 @@ PyoftheBeholder/
 ├── levels/                    # Level data
 │   └── sewer.py              # Level 1 - wall grids, clipping, switches
 ├── data/                      # Game data files (CSV)
-│   ├── tiles.csv             # Tile definitions (Environment, Wall, Panel -> Sprite)
+│   ├── tiles.csv             # Tile definitions (Environment, dungeon_map_code, Panel -> Sprite)
 │   ├── sprites.csv           # Sprite source coordinates in wallset images
 │   ├── panels.csv            # Panel screen positions and dimensions
 │   ├── imagefiles.csv        # Wallset image file list
-│   └── walls.csv             # Wall type definitions
+│   └── objects.csv           # Object type definitions
 ├── assets/                    # Game assets
 │   ├── Environments/         # Wallset sprite sheets + adornments
 │   ├── UI/                   # Compass overlays (N.png, S.png, E.png, W.png)
@@ -67,7 +67,8 @@ PyoftheBeholder/
 ### tiles.csv
 Maps tile combinations to sprites. Each row defines a tile:
 - `Environment` - The tileset/theme (e.g., "Sewer")
-- `Wall` - Wall variant (e.g., "A", "B", "BG1")
+- `Object` - Friendly name for the object type
+- `dungeon_map_code` - Code used in level files for lookup (e.g., "A", "B", "LeverUp")
 - `Panel` - Screen panel position (e.g., "LP1", "CF2")
 - `SpriteName` - Reference to sprite in sprites.csv
 - `Flip` - Whether to horizontally flip the sprite
@@ -139,7 +140,7 @@ python tools/tile_viewer.py
 
 Hierarchical browser to navigate tiles:
 1. **Environment** - Select tileset/theme
-2. **Wall** - Select wall variant
+2. **MapCode** - Select dungeon map code (used in level files)
 3. **Panel** - Select screen panel
 
 | Key | Action |

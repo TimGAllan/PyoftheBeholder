@@ -113,6 +113,9 @@ adornments = {
     # wall_direction: 'x' = on X-axis wall (vertical), 'y' = on Y-axis wall (horizontal)
     # Doors in clipping grid: 2 = open, 3 = closed
 
+    # Rockfall at entry position - player sees this when entering facing East
+    ('x', 7, 13): 'R',
+
     # Door at clipping[9][14] - Upper corridor door
     ('y', 14, 8): 'LeverUp',     # Button north of door
 
@@ -192,7 +195,7 @@ switches = {
 }
 
 
-entry_pos = (0, 7, 13, 'E')
+entry_pos = (0, 7, 13, 'N')
 
 levels = [DungeonLevel(environment, walls_x, walls_y, clipping, adornments, switches)]
 
