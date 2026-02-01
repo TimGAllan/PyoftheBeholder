@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python Main.py:*)",
+      "Bash(python:*)",
+      "Bash(pushd:*)",
+      "Bash(dir /s /b)",
+      "Bash(tree:*)",
+      "Bash(ls:*)",
+      "Bash(printf:*)",
+      "Bash(dir /b C:UserstimgasourcereposPyoftheBeholder)",
+      "Bash(echo:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
